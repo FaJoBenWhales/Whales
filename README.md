@@ -1,0 +1,2 @@
+# Whales
+Whale recognition competition
