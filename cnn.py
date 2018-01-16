@@ -1,12 +1,10 @@
-# Deep learning lab course final project.
-# Kaggle whale classification.
+# Deep learning lab course final project.  Kaggle whale
+# classification.
 
 # Build a tensorflow model according to the hyperparameters provided.
 
 import tensorflow as tf
 import csv
-
-n_types = 500  # ??
 
 
 def extract_labels(path="data/train.csv"):
@@ -18,14 +16,25 @@ dict."""
     return mydict
 
 
-def build_model(mode, layers_list, optimizer, optimizer_params):
+def build_model(features, labels, mode, params):
     """Returns an EstimatorSpec for the model described by the
-hyperparameters. Cf. https://www.tensorflow.org/tutorials/layers#building_the_cnn_mnist_classifier"""
+hyperparameters. This is the model_fn as in
+https://www.tensorflow.org/tutorials/layers#building_the_cnn_mnist_classifier
+
+    """
     # layers_list is a list of the form (pool/conv/dense, filters,
     # size, units, activation)
 
-    input_layer = tf.placeholder(tf.float32)
-    labels = tf.placeholder(tf.float32)
+    # unpack parameters
+    layers_list = params["layers_list"]
+    optimizer = params["optimizer"]
+    optimizer_params = params["optimizer_params"]
+    n_classes = params["n_classes"]
+    image_x = params["image_x"]
+    image_y = params["image_y"]
+    
+    input_layer = tf.reshape(features, [-1, image_x, image_y, 1])
+    # labels = tf.placeholder(tf.float32)
 
     layers = [input_layer]  # tf layers
     # add layers according to the descriptions 
@@ -46,11 +55,13 @@ hyperparameters. Cf. https://www.tensorflow.org/tutorials/layers#building_the_cn
             layer = tf.layers.dense(inputs=layers[-1],
                                     units=units,
                                     activation=activation)
+        elif type == "flatten":
+            layer = tf.contrib.layers.flatten(inputs=layers[-1])
 
         layers.append(layer)
 
     # add softmax output layer
-    output = tf.layers.dense(inputs=layers[-1], units=n_types)
+    output = tf.layers.dense(inputs=layers[-1], units=n_classes)
     classes = tf.argmax(input=output, axis=1)
     softmax = tf.nn.softmax(output, name="softmax_output")
 
@@ -66,7 +77,7 @@ hyperparameters. Cf. https://www.tensorflow.org/tutorials/layers#building_the_cn
         return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
     # one-hot encoding and cross entropy loss
-    onehot_labels = tf.one_hot(indices=tf.cast(labels, tf.int32), depth=n_types)
+    onehot_labels = tf.one_hot(indices=tf.cast(labels, tf.int32), depth=n_classes)
     loss = tf.losses.softmax_cross_entropy(
         onehot_labels=onehot_labels, logits=output)    
 
