@@ -8,5 +8,8 @@ auto-save-list
 tramp
 .\#*
 
+# PyCharm files
+.idea/
+
 # project-specific
 data/
