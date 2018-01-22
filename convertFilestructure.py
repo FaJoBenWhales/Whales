@@ -18,6 +18,8 @@ def copy_and_restructure(new_folder_path, limit_number_files=None):
         raise EnvironmentError((1, "folder already exists:" + new_folder_path))
     os.mkdir(new_folder_path)
     for i in range(1, len(indexfile)):
+        if len(indexfile) > 300 and i % 100 == 0:
+            print("progress copying:", i, "of", len(indexfile))
         if limit_number_files is not None and i > limit_number_files:
             return
         indexline = indexfile[i]
@@ -30,7 +32,6 @@ def copy_and_restructure(new_folder_path, limit_number_files=None):
             labels[imagelabel] = True  # (imagelabel in labels)==True now
         shutil.copyfile(TRAIN_DATA_PATH + imagefilename, new_folder_path + imagelabel + "/" + imagefilename)
             
-            
-            
-            
+
+
 copy_and_restructure(BASE_PATH + "train_structured/", None)
