@@ -1,7 +1,7 @@
 # Deep learning lab course final project.
 # Kaggle whale classification.
 
-# routines to handle the images
+# various routines to handle the images
 
 
 import os
@@ -17,6 +17,30 @@ import skimage.color  # see http://scikit-image.org/docs/stable/api/api.html
 #
 #
 
+
+def cropWale(image, min_x_resolution, min_y_resolution):
+    """
+    Crops an image with a wale fluke, such that the image is in the center.
+    :param image: The image to crop. Numpy array with dim (x, y) or (x, y, 3).
+    :param min_x_resolution: Minimum remaining resolution in x direction, has priority over cropping.
+    :param min_y_resolution: Minimum remaining resolution in y direction, has priority over cropping.
+    :return: The cropped image.
+    """
+    pass # TODO implement
+    # have a look at skimage.segmentation
+
+def downscale(image, xRes, yRes, padding):
+    """
+    Reduces the resolution of an image.
+    :param image: The image to scale down. Numpy array with dim (x, y) or (x, y, 3).
+    :param xRes: The resulting number of pixels in x direction.
+    :param yRes: The resulting number of pixels in y direction.
+    :param padding: Value to pad the image with if needed.
+    :return: The image with reduced resolution.
+    """
+    pass # TODO implement
+    ### skimage.transform.downscale_local_mean(image, factors, cval=0, clip=True) # ignore last parameter
+    # -> skimage.transform.resize(image, output_shape, order=1, mode=None, cval=0, clip=True, preserve_range=False)
 
 def load_jpg(path):
     """
@@ -46,7 +70,7 @@ def test_imageio():
 
 def test_skimage():
     """
-    simple test of skimage. loads and writes files.
+    simple test of skimage. loads, converts and writes files.
     """
     image = load_jpg("./data/small_train/0a5c0f48.jpg")
     # convert RGB to grayscale
