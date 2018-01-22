@@ -93,3 +93,37 @@ def load_train_batch(batch_size: int, processing_options: dict) -> list:
             images = images_grey
 
     return images
+
+
+def module_test():
+    """
+    Tests this module.
+    Prints messages about found issues to stdout. Keeps quiet else.
+    """ 
+    general_message = "In module Dataloader.py a test-case failed: "    
+    
+    # testcase 1
+    try:
+        images = load_train_batch(100, dict())
+        if len(images) != 100:
+            raise AssertionError
+    except:
+        print(general_message + "case number 1")
+    
+    # testcase 2
+    try:
+        images = load_train_batch(50, {"rescale": [230, 230]})
+        for image in images:
+            if image.shape != (230, 230) and image.shape != (230, 230, 3):
+                raise AssertionError
+    except:
+        print(general_message + "case number 2")
+        
+    # testcase 3
+    try:
+        images = load_train_batch(70, {"rescale": [230, 230], "greyimage": True})
+        for image in images:
+            if image.shape != (230, 230):
+                raise AssertionError
+    except:
+        print(general_message + "case number 3")
