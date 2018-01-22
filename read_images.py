@@ -10,6 +10,8 @@ import numpy as np
 from scipy.misc import imread as depricated_imread  # works, but derpicated, see documentation
 import imageio  # see https://imageio.github.io/ and http://imageio.readthedocs.io/en/latest/userapi.html
 import skimage.color  # see http://scikit-image.org/docs/stable/api/api.html
+import skimage.transform
+import skimage.filters
 
 #
 #
@@ -18,7 +20,27 @@ import skimage.color  # see http://scikit-image.org/docs/stable/api/api.html
 #
 
 
-def cropWale(image, min_x_resolution, min_y_resolution):
+def test_downscale():
+    """
+    tests the function downscale. loads modifies and stores an image.
+    """
+    image = load_jpg("./data/small_train/0a5c0f48.jpg")
+    image = downscale(image, 250, 250)
+    imageio.imwrite("test_output.jpg", image)
+
+
+def downscale(image, x_res, y_res):
+    """
+    Reduces the resolution of an image.
+    :param image: The image to scale down. Numpy array with dim (x, y) or (x, y, 3).
+    :param x_res: The resulting number of pixels in x direction.
+    :param y_res: The resulting number of pixels in y direction.
+    :return: The image with reduced resolution.
+    """
+    return skimage.transform.resize(image, (x_res, y_res), mode='edge', clip=True, preserve_range=True)
+
+
+def crop_wale(image, min_x_resolution, min_y_resolution):
     """
     Crops an image with a wale fluke, such that the image is in the center.
     :param image: The image to crop. Numpy array with dim (x, y) or (x, y, 3).
@@ -26,21 +48,9 @@ def cropWale(image, min_x_resolution, min_y_resolution):
     :param min_y_resolution: Minimum remaining resolution in y direction, has priority over cropping.
     :return: The cropped image.
     """
-    pass # TODO implement
+    pass  # TODO implement
     # have a look at skimage.segmentation
 
-def downscale(image, xRes, yRes, padding):
-    """
-    Reduces the resolution of an image.
-    :param image: The image to scale down. Numpy array with dim (x, y) or (x, y, 3).
-    :param xRes: The resulting number of pixels in x direction.
-    :param yRes: The resulting number of pixels in y direction.
-    :param padding: Value to pad the image with if needed.
-    :return: The image with reduced resolution.
-    """
-    pass # TODO implement
-    ### skimage.transform.downscale_local_mean(image, factors, cval=0, clip=True) # ignore last parameter
-    # -> skimage.transform.resize(image, output_shape, order=1, mode=None, cval=0, clip=True, preserve_range=False)
 
 def load_jpg(path):
     """
@@ -113,3 +123,7 @@ def pickle_load_images(path="data/train.pkl"):
 
 # test_imageio()
 # test_skimage()
+
+
+
+test_downscale()

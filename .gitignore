@@ -1,4 +1,6 @@
+#
 # emacs files
+#
 *~
 \#*\#
 /.emacs.desktop
@@ -8,8 +10,18 @@ auto-save-list
 tramp
 .\#*
 
+#
 # PyCharm files
+#
 .idea/
 
+
+#
+# python 
+#
+__pycache__
+
+#
 # project-specific
+#
 data/
