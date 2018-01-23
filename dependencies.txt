@@ -2,5 +2,5 @@ This project needs following libraries:
 
 import tensorflow       (look up installation in inet)
 import numpy            (look up installation in inet, 'pip3 install numpy' could work)
-import imageio          (pip3 install imageio)
+# import imageio          (pip3 install imageio)
 import scikit-image     (pip3 install scikit-image)

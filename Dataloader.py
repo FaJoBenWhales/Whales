@@ -8,7 +8,8 @@
 
 import skimage.transform
 import skimage.color
-import imageio
+import skimage.io
+# import imageio
 
 
 # constants
@@ -49,7 +50,7 @@ def _get_train_images(batch_size: int) -> list:
             _traindata_offset = 0
         indexline = indexline.split(",")
         imagefilename = indexline[0]
-        image = imageio.imread(_TRAIN_IMAGE_FOLDER + imagefilename)
+        image = skimage.io.imread(_TRAIN_IMAGE_FOLDER + imagefilename)
         batch.append(image)
     return batch
 
