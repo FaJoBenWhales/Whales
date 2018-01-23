@@ -89,6 +89,7 @@ def plot_whales(imgs, labels=None, rows=4):
         plt.imshow(img, cmap='gray')              
         if len(labels)>0:
             subplot.set_title(labels[i], fontsize=16)
+    plt.show()
             
 # plot (all or first max_imgs) images of whale with number whale_no
 def show_whales(whale_no, folder="data/train", csv_file="data/train.csv",
