@@ -128,3 +128,7 @@ def module_test():
                 raise AssertionError
     except:
         print(general_message + "case number 3")
+
+
+if __name__ == "__main__":
+    module_test()
