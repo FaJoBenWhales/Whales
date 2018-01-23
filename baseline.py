@@ -1,9 +1,11 @@
 # Deep learning lab course final project.
 # Kaggle whale classification.
 
-# Use pretrained tensorflow model (Inception v3) and just learn the last (= classifictaion) layers as described in https://www.tensorflow.org/tutorials/image_retraining
+# Use pretrained tensorflow model (Inception v3) and just learn the
+# last (= classifictaion) layers as described in https://www.tensorflow.org/tutorials/image_retraining
 
-# Images are expected in a directory structure sorted by label (e.g. whale1/image*.jpg, whale2/iamge*.jpg, ...)
+# Images are expected in a directory structure sorted by label
+# (e.g. whale1/image*.jpg, whale2/iamge*.jpg, ...)
 
 from utilities import get_whales, read_csv
 from operator import itemgetter
@@ -41,7 +43,7 @@ def train_classifier():
         sys.stdout.write(line)
         
 
-sort_by_labels(50, include_new_whale=True)
+sort_by_labels(300, include_new_whale=True)
 print("Done creating environment.")
-print("Retrain last layer of Inception v3 model.")
-train_classifier()
+#print("Retrain last layer of Inception v3 model.")
+#train_classifier()
