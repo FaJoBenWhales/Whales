@@ -78,16 +78,19 @@ def show_frequencies(num = 100, file_name = "data/train.csv"):
     plt.show()
 
 # plot list of given images    
-def plot_whales(imgs, labels=None, rows=4):
+def plot_whales(imgs, max_imgs = 100, labels=None, rows=4):
     
     figure = plt.figure(figsize=(16, 10))
+    imgs = imgs[:max_imgs]
     cols = len(imgs) // rows + 1
-    
-    for i, img in enumerate(imgs):    
+    # print("gaga")
+    for i in range(len(imgs)):
+    # for i in range(10)
+    # for i, img in enumerate(imgs):    
         subplot = figure.add_subplot(rows, cols, i + 1)
         subplot.axis('Off')
-        plt.imshow(img, cmap='gray')              
-        if len(labels)>0:
+        plt.imshow(imgs[i], cmap='gray')              
+        if labels != None and len(labels)>0:
             subplot.set_title(labels[i], fontsize=16)
     plt.show()
             
@@ -152,7 +155,18 @@ def create_small_case(sel_whales = [1,2,3],          # whales to be considered
     print("write csv file: {}".format(small_csv))            
     write_csv(small_list, small_csv)
 
-# evaluation metrics    
+
+'''
+evaluation metrics MAP@5
+sources: 
+https://github.com/benhamner/Metrics/blob/master/Python/ml_metrics/average_precision.py
+https://www.kaggle.com/c/FacebookRecruiting/discussion/2002
+https://en.wikipedia.org/wiki/Information_retrieval
+Note, that the metric is designed for "document retrieval", 
+where many outcomes might be true (= "relevant documents")
+Our case is specific, as there is only one "relevant document" per prediction 
+(= the true prediction)
+'''
 # Precision at k is a percentage of correct items among first k recommendations
 # "cut off k": only first occurence of matching prediction contributes to score
 def precision_at_k(model_prediction, true_label, k):
