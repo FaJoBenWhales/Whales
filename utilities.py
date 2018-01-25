@@ -68,6 +68,7 @@ def show_histogram(num = 100, file_name = "data/train.csv"):
 
 # alternative representation of frequencies of occurance    
 def show_frequencies(num = 100, file_name = "data/train.csv"):
+    
     train_list = read_csv(file_name = file_name)
     _, counts = get_whales(train_list)    
     num = min(num, len(counts)-1)   # avoid errors if num chosen larger than len(counts)
@@ -78,9 +79,9 @@ def show_frequencies(num = 100, file_name = "data/train.csv"):
     plt.show()
 
 # plot list of given images    
-def plot_whales(imgs, max_imgs = 100, labels=None, rows=4):
+def plot_whales(imgs, max_imgs = 100, labels=None, rows=4, figsize=(16,10)):
     
-    figure = plt.figure(figsize=(16, 10))
+    figure = plt.figure(figsize=figsize)
     imgs = imgs[:max_imgs]
     cols = len(imgs) // rows + 1
     # print("gaga")
@@ -122,11 +123,12 @@ def show_whales(whale_no, folder="data/train", csv_file="data/train.csv",
            
 # as a playground reproduce setting (image-files, csv-file, directory structure) 
 # for small case (small number of selected individuals)
+# creating subdirectory for each class/whale, as required by Keras/Tensorflow
 def create_small_case(sel_whales = [1,2,3],          # whales to be considered
                       train_dir = "data/train",
                       train_csv = "data/train.csv",
                       small_dir = "data/small_train", 
-                      small_csv = "data/small_train.csv"):
+                      small_csv = None):         # optionally write CSV File as train.csv
 
     if not os.path.isdir(train_dir):
         print("{} no valid directory".format(train_dir))
@@ -137,7 +139,7 @@ def create_small_case(sel_whales = [1,2,3],          # whales to be considered
         print("old directory removed {}".format(small_dir))
     except:
         print("directory {} did not exist so far".format(small_dir))
-    
+        
     os.mkdir(small_dir)
     small_list=[]
     train_list = read_csv(file_name = train_csv)  # get list with (filenames, whalenames)
@@ -146,14 +148,17 @@ def create_small_case(sel_whales = [1,2,3],          # whales to be considered
         # whale_idx = whales[i][2]                 # get list of indices of this whale
         print("copy {} images for whale # {} in ordered list, called {}"
               .format(whales[i][1], i, whales[i][0]))
-        for idx in whales[i][2]:        # np array containing indices of this whale pointing into train_csv list  
+        whale_dir = os.path.join(small_dir, whales[i][0])
+        os.mkdir(whale_dir)
+        for idx in whales[i][2]:   # array of indices of this whale pointing into train_csv list
             fn = train_list[idx][0]     # get filename out of train_csv list
             shutil.copy(os.path.join(train_dir, fn), 
-                        os.path.join(small_dir, fn))
+                        os.path.join(whale_dir, fn))
             
             small_list.append((fn,whales[i][0]))
-    print("write csv file: {}".format(small_csv))            
-    write_csv(small_list, small_csv)
+    if small_csv != None:
+        print("write csv file: {}".format(small_csv))            
+        write_csv(small_list, small_csv)
 
 
 '''
