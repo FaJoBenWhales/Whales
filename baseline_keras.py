@@ -13,6 +13,11 @@ import skimage.io
 import numpy as np
 from utilities import write_csv
 
+
+INPUT_DIRECTORY = "baseline/"
+OUTPUT_FILE = "submission.csv"
+
+
 # generate image batches, replace by Keras ImageDataGenerator
 # def input_generator(batch_size=64, directory="./data/test"):
 #     i = 0
@@ -24,12 +29,12 @@ from utilities import write_csv
 #             images = []
 #         images.append(skimage.io.imread(os.path.join(directory, filename)))
 #         i += 1
-        
+
 
 # Use pretrained model as described in https://keras.io/applications/
 
 
-def make_label_dict(directory="baseline/train"):
+def make_label_dict(directory="baseline/"):
     label_dict = dict()
     for i, label in enumerate(sorted(os.listdir(directory))):
         label_dict[i] = label
@@ -46,7 +51,7 @@ def main():
     # let's add a fully-connected layer
     x = Dense(1024, activation='relu')(x)
     # and a logistic layer
-    num_classes = 300
+    num_classes = len(os.listdir(INPUT_DIRECTORY))
     predictions = Dense(num_classes, activation='softmax')(x)
     
     # this is the model we will train
@@ -64,18 +69,18 @@ def main():
     train_gen = image.ImageDataGenerator()
     
     # train the model on the new data for a few epochs
-    model.fit_generator(train_gen.flow_from_directory("baseline/train"),
-                        steps_per_epoch=3, epochs=1)
+    model.fit_generator(train_gen.flow_from_directory(INPUT_DIRECTORY),
+                        steps_per_epoch=3, epochs=1, verbose=2)
 
     # let's predict the test set to see a rough score
     labels = make_label_dict()
     test_gen = image.ImageDataGenerator()
-    predictions = model.predict_generator(test_gen.flow_from_directory("baseline/test", class_mode=None), steps=15611//32)
+    predictions = model.predict_generator(test_gen.flow_from_directory(INPUT_DIRECTORY, class_mode=None), verbose=1) # steps=15611//32)
     top_k = predictions.argsort()[:, -4:][:, ::-1]
     classes = [" ".join([labels[i] for i in line]) for line in top_k]
     filenames = test_gen.filenames
     csv_list = zip(filenames, classes)
-    write_csv(csv_list, file_name="submission.csv")
+    write_csv(csv_list, file_name=OUTPUT_FILE)
 
     # at this point, the top layers are well trained and we can start fine-tuning
     # convolutional layers from inception V3. We will freeze the bottom N layers
@@ -104,3 +109,4 @@ def main():
 
 
 main()
+

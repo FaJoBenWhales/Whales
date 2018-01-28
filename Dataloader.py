@@ -33,9 +33,10 @@ def _resize(image, x_res, y_res):
 
 def _get_train_images(batch_size: int) -> list:
     """
-    Load train images.
+    Load train images and labels.
     :param batch_size: number of images to load.
-    :return: list of ndarrays. len(list) = batch_size, ndarrays have image-shapes.
+    :return:  A list of tuples. The tuples are (image, label). image is a numpy array of dimension (x, y) for 
+        greyimages and (x, y, 3) for color images. label is a string. 
     """
     global _traindata_offset
     with open(_TRAIN_IMAGE_INDEX_FILE, 'r') as file:
@@ -50,8 +51,9 @@ def _get_train_images(batch_size: int) -> list:
             _traindata_offset = 0
         indexline = indexline.split(",")
         imagefilename = indexline[0]
+        imagelabel = indexline[1]
         image = skimage.io.imread(_TRAIN_IMAGE_FOLDER + imagefilename)
-        batch.append(image)
+        batch.append((image, imagelabel))
     return batch
 
 
@@ -59,15 +61,16 @@ def load_train_batch(batch_size: int, processing_options: dict) -> list:
     """
     Loads a batch of whale data. Applies data augmentation and pre-processing.
     Successive calls to the function iterate over the data.
-    :param batch_size: The number of images. Image will be numpy array of shape (x, y) or (x, y, 3).
+    :param batch_size: The number of images.
     :param processing_options: dictionary of type (String -> optionArgument).
-    optionArgument depends on the option. Options may be combined without limitation.
-    Options are for now:
-    "augmentation": factor. factor gives how many images to generate per given image.
-    "rescale": [x, y]. x and y gives the desired image dimensions. Scales the images.
-    "autocrop" [x, y]. DON'T EXPECT IMPLEMENTATION SOON. x and y gives the desired image dimensions. Crops the image to wale flukes.
-    "greyimage": bool. If bool==True always returns a grey image. Otherwise a color or grey image.
-    :return: A list of numpy arrays. Combined shape (batch_size, x, y) or (batch_size, x, y, 3).
+        optionArgument depends on the option. Options may be combined without limitation.
+        Options are for now:
+        "augmentation": factor. factor gives how many images to generate per given image.
+        "rescale": [x, y]. x and y gives the desired image dimensions. Scales the images.
+        "autocrop" [x, y]. DON'T EXPECT IMPLEMENTATION SOON. x and y gives the desired image dimensions. Crops the image to wale flukes.
+        "greyimage": bool. If bool==True always returns a grey image. Otherwise a color or grey image.
+    :return: A list of tuples. The tuples are (image, label). image is a numpy array of dimension (x, y) for 
+        greyimages and (x, y, 3) for color images. label is a string. 
     """
 
     images = _get_train_images(batch_size)
@@ -81,7 +84,7 @@ def load_train_batch(batch_size: int, processing_options: dict) -> list:
         x = rescale_options[0]
         y = rescale_options[1]
         for image in images:
-            images_rescaled.append(_resize(image, x, y))
+            images_rescaled.append((_resize(image[0], x, y), image[1]))
         images = images_rescaled
     if "autocrop" in processing_options:
         raise NotImplementedError
@@ -90,12 +93,13 @@ def load_train_batch(batch_size: int, processing_options: dict) -> list:
         convert = processing_options["greyimage"]
         if convert:
             for image in images:
-                images_grey.append(skimage.color.rgb2gray(image))
+                images_grey.append((skimage.color.rgb2gray(image[0]), image[1]))
             images = images_grey
 
     return images
 
 
+# noinspection PyBroadException
 def module_test():
     """
     Tests this module.
@@ -108,25 +112,25 @@ def module_test():
         images = load_train_batch(100, dict())
         if len(images) != 100:
             raise AssertionError
-    except:
+    except Exception:
         print(general_message + "case number 1")
     
     # testcase 2
     try:
         images = load_train_batch(50, {"rescale": [230, 230]})
         for image in images:
-            if image.shape != (230, 230) and image.shape != (230, 230, 3):
+            if image[0].shape != (230, 230) and image[0].shape != (230, 230, 3):
                 raise AssertionError
-    except:
+    except Exception:
         print(general_message + "case number 2")
         
     # testcase 3
     try:
         images = load_train_batch(70, {"rescale": [230, 230], "greyimage": True})
         for image in images:
-            if image.shape != (230, 230):
+            if image[0].shape != (230, 230):
                 raise AssertionError
-    except:
+    except Exception:
         print(general_message + "case number 3")
 
 
