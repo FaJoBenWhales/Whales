@@ -75,10 +75,11 @@ def main():
     # let's predict the test set to see a rough score
     labels = make_label_dict()
     test_gen = image.ImageDataGenerator()
-    predictions = model.predict_generator(test_gen.flow_from_directory(INPUT_DIRECTORY, class_mode=None), verbose=1) # steps=15611//32)
+    flow = test_gen.flow_from_directory(INPUT_DIRECTORY, class_mode=None)
+    predictions = model.predict_generator(flow, verbose=1) # steps=15611//32)
     top_k = predictions.argsort()[:, -4:][:, ::-1]
     classes = [" ".join([labels[i] for i in line]) for line in top_k]
-    filenames = test_gen.filenames
+    filenames = flow.filenames
     csv_list = zip(filenames, classes)
     write_csv(csv_list, file_name=OUTPUT_FILE)
 
