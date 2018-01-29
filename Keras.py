@@ -283,7 +283,8 @@ def draw_num_classes_graphs():
         print("Training model on {} most common classes.".format(num_classes))
         model = create_pretrained_model(num_classes=num_classes)
         histories = train_and_save(model, epochs=50, num_classes=num_classes)
-        run_name = "{}classes".format(num_classes)
+        run_name = "run-{}_{}classes".format(datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S"),
+                                             num_classes)
         save_learning_curves(histories[0], run_name)
         csv_path = os.path.join("plots/", run_name, "data.csv")
         write_csv_dict(histories[0],
@@ -314,5 +315,6 @@ if __name__ == "__main__":
         exit()
     if "--class-graph" in sys.argv:
         draw_num_classes_graphs()
+        exit()
     print("given command line options unknown.")
     
