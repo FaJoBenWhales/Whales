@@ -15,13 +15,18 @@ tramp
 #
 .idea/
 
-
 #
 # python 
 #
 __pycache__
 
 #
+# jupyter-notebook
+#
+.ipynb_checkpoints/
+
+#
 # project-specific
 #
 data/
+
