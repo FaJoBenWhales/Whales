@@ -93,7 +93,7 @@ def print_data_info():
     #print(num_train_imgs)
     
 
-def create_pretrained_model(two_layers=True):
+def create_pretrained_model(two_layers=True, num_classes=num_classes):
     # create the base pre-trained model
     base_model = InceptionV3(weights='imagenet', include_top=False)
     
@@ -276,12 +276,13 @@ def save_learning_curves(history, run_name, base_path="plots/"):
 
 def draw_num_classes_graphs():
     """Train network and save learning curves for different values for num_classes."""
-    values = [7, 8]  #, 100, 250, 1000, 4000]
+    values = [10, 50, 100, 250, 1000]
     for num_classes in values:
         print("Training model on {} most common classes.".format(num_classes))
-        model = create_pretrained_model()
+        model = create_pretrained_model(num_classes=num_classes)
         histories = train_and_save(model, epochs=1, num_classes=num_classes)
-        run_name = "{}classes".format(num_classes)
+        run_name = "run-{}_{}classes".format(num_classes,
+                                             datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S"))
         save_learning_curves(histories[0], run_name)
         csv_path = os.path.join("plots/", run_name, "data.csv")
         write_csv_dict(histories[0],
@@ -312,5 +313,6 @@ if __name__ == "__main__":
         exit()
     if "--class-graph" in sys.argv:
         draw_num_classes_graphs()
+        exit()
     print("given command line options unknown.")
     
