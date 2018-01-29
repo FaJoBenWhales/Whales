@@ -4,8 +4,10 @@
 # utility functions
 
 import os
+import copy
 import csv
 import numpy as np
+import random
 import shutil
 import matplotlib.pyplot as plt
 
@@ -121,53 +123,113 @@ def show_whales(whale_no, folder="data/train", csv_file="data/train.csv",
     
     plot_whales(imgs, labels=label_list, rows=rows)
 
-           
-# as a playground reproduce setting (image-files, csv-file, directory structure) 
-# for small case (small number of selected individuals)
-# creating subdirectory for each class/whale, as required by Keras/Tensorflow
-def create_small_case(sel_whales = [1,2,3],          # whales to be considered
-                      train_dir = "data/train",
-                      train_csv = "data/train.csv",
-                      small_dir = "data/small_train", 
-                      small_csv = None,         # optionally write CSV File as train.csv
-                      sub_dirs = True):         # create subdirectory for each class
+'''           
+as a playground reproduce setting (image-files, csv-file, directory structure) 
+with a subset of training data for small case (small number of selected individuals)
+creating subdirectory for each class/whale, as required by Keras/Tensorflow
+optionally separate samples on training / validation data
+'''
+def create_small_case(sel_whales = [1,2,3],             # whales to be considered
+      all_train_dir = "data/train",     # directory with original kaggle training data
+      all_train_csv = "data/train.csv", # original kaggle train.csv file
+      train_dir = "data/small_train",   # training data actually used by model (subset of kaggle data) 
+      train_csv = None,                 # optional: write kaggle-like CSV File for actual training data
+      valid_dir = "data/small_valid",   # optional: subdirectory with validation data
+      valid_csv = None,                 # optional: write kaggle-like CSV File for validation data
+      train_valid = 1.,
+      sub_dirs = True):                 # optional create subdirectory for each class (as required by keras)
 
-    if not os.path.isdir(train_dir):
-        print("{} no valid directory".format(train_dir))
+    
+    if not os.path.isdir(all_train_dir):
+        print("{} no valid directory".format(all_train_dir))
         return
 
+    # create subdirectory for training data, delete old one, if existing
     try: 
-        shutil.rmtree(small_dir)   # remove directory, if already existing 
-        print("old directory removed {}".format(small_dir))
+        shutil.rmtree(train_dir)   # remove directory, if already existing 
+        print("old directory removed {}".format(train_dir))
     except:
-        print("directory {} did not exist so far".format(small_dir))
+        print("directory {} did not exist so far".format(train_dir))
         
-    os.mkdir(small_dir)
-    if not sub_dirs:
-        target_dir = os.path.join(small_dir, "whales")
-        os.mkdir(target_dir)
+    os.mkdir(train_dir)
+    if not sub_dirs:         # if no subdirectories write all into subdir "whales"
+        train_path = os.path.join(train_dir, "whales")    
+        os.mkdir(train_path)
+
+    # create subdirectory for validation data in required
+    if valid_dir != None:
+        try: 
+            shutil.rmtree(valid_dir)   # remove directory, if already existing 
+            print("old directory removed {}".format(valid_dir))
+        except:
+            print("directory {} did not exist so far".format(valid_dir))
         
-    small_list=[]
-    train_list = read_csv(file_name = train_csv)  # get list with (filenames, whalenames)
-    whales, counts = get_whales(train_list)   # get list of whales ordered by frequency
+        os.mkdir(valid_dir)
+        if not sub_dirs:    # if no subdirectories write all into subdir "whales"
+            valid_path = os.path.join(valid_dir, "whales")    
+            os.mkdir(valid_path)
+        
+    all_train_list = read_csv(file_name = all_train_csv)  # get total list with (filenames, whalenames)
+    whales, counts = get_whales(all_train_list)   # get complete list of whales ordered by frequency
+
+    train_list=[]
+    valid_list=[]    
     for i in sel_whales:                          
-        print("copy {} images for whale # {} in ordered list, called {}"
+        print("copy {} images for whale # {}, called {}"
               .format(whales[i][1], i, whales[i][0]))
-        if sub_dirs:
-            target_dir = os.path.join(small_dir, whales[i][0])
-            os.mkdir(target_dir)
-        for idx in whales[i][2]:   # array of indices of this whale pointing into train_csv list
-            fn = train_list[idx][0]     # get filename out of train_csv list
-            shutil.copy(os.path.join(train_dir, fn), 
-                        os.path.join(target_dir, fn))
+        
+        if sub_dirs:     # create subdirectory for each whale
+            train_path = os.path.join(train_dir, whales[i][0])
+            os.mkdir(train_path)
+            if valid_dir != None:    # another subdir for validation data for this whale
+                valid_path = os.path.join(valid_dir, whales[i][0])
+                os.mkdir(valid_path)
+                
+        # shuffled list of all images of this particular whale 
+        indices = copy.deepcopy(whales[i][2])
+        random.shuffle(indices)
+        if valid_dir == None:      # no validation
+            train_indices = indices            
             
-            small_list.append((fn,whales[i][0]))
-    if small_csv != None:
-        print("write csv file: {}".format(small_csv))            
-        write_csv(small_list, small_csv)
-    
-    print(len(small_list), " images of ", len(sel_whales), " whales copied")
-    return len(small_list)  # return number of images
+        else:                      # split data into training and validation randomly
+            if len(indices) == 1: 
+                # allow validation also, if only one image per whale: 
+                # data augmentation during training will create different image, so validation makes sense
+                train_indices = indices
+                valid_indices = indices
+            else:
+                split = max(int(len(indices)*train_valid),1)   # at least one training / validation sample
+                train_indices = indices[:split]
+                valid_indices = indices[split:]
+                
+        for idx in train_indices:   # array of indices of this whale pointing into train_csv list
+            fn = all_train_list[idx][0]     # get filename out of train_csv list
+            wn = all_train_list[idx][1]      # get whalename out of train_csv list
+            shutil.copy(os.path.join(all_train_dir, fn), 
+                        os.path.join(train_path, fn))
+            train_list.append((fn,wn))
+            
+        if valid_dir != None:            
+            for idx in valid_indices:   # array of indices of this whale pointing into train_csv list
+                fn = all_train_list[idx][0]     # get filename out of train_csv list
+                wn = all_train_list[idx][1]      # get whalename out of train_csv list
+                shutil.copy(os.path.join(all_train_dir, fn), 
+                            os.path.join(valid_path, fn))
+                valid_list.append((fn,wn))
+                
+    print(len(train_list) + len(valid_list), " images of ", len(sel_whales), " whales copied in total")
+    print("Target Directory train: ", train_dir, " validation: ", valid_dir)
+    print(len(train_list), " images copied as training data")
+    print(len(valid_list), " images copied as validation data")
+                
+    if train_csv != None:
+        print("write csv file with training data: {}".format(train_csv))            
+        write_csv(train_list, train_csv)
+    if valid_csv != None:
+        print("write csv file with validation data: {}".format(valid_csv))            
+        write_csv(valid_list, valid_csv)
+        
+    return len(train_list), len(valid_list)  # return number of images
 
 
 # create dictionary mapping class_no as used by Keras in predictions --> whalenames
