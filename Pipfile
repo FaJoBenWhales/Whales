@@ -13,10 +13,9 @@ verify_ssl = true
 
 scikit-image = "*"
 tensorflow = "*"
-keras = "*"
+Keras = "*"
 "h5py" = "*"
 jupyter = "*"
-tensorflow-gpu = "*"
 
 
 [requires]
