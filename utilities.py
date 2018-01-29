@@ -41,6 +41,20 @@ def write_csv(csv_list, file_name = "data/small_train.csv"):
             #spamwriter.writerow(['Spam', 'Lovely Spam', 'Wonderful Spam'])
 
 
+def write_csv_dict(csv_dict, keys=None, include_header=True, filename="csv.csv"):
+    """Write specified dictionary to csv file filename.
+    keys: ordered list of the dictionary keys
+    csv_dict: dictionary with the columns for the csv.
+    Does not check for dfferent column lengths!"""
+    if keys is None:
+        keys = csv_dict.keys()
+    with open(filename, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        writer.writerow(keys)
+        for i in range(len(csv_dict[keys[0]])):
+            writer.writerow([csv_dict[key][i] for key in keys])
+
+
 # generate sorted list clustered by individuals: 
 # (name, number of images, array of indeces into train_list)
 def get_whales(train_list):
@@ -333,3 +347,18 @@ def Dummy_MAP(probs = 'uniform',
         raise AssertionError
 
     return mean_average_precision(dummy_preds, dummy_true_labels, max_pred)
+
+
+# Plotting utilities
+
+def save_plot(x, ys, xlabel, ylabel, path, title=""):
+    """Create and save matplotlib plot with the desired data.
+    ys is a dict of data lines with their labels as keys."""
+    plt.figure()
+    for (ylabel, y) in ys.items():
+        plt.plot(x, y)        
+    plt.title(title)
+    plt.xlabel(xlabel)    
+    plt.legend(ys.keys())
+    plt.ylabel(ylabel)
+    plt.savefig(path)
