@@ -31,10 +31,10 @@ Verwendung:
 1. Projekt mit python 3 anlegen: 
 	Im Projektordner ausführen: pipenv --three
 
-2. Paket erstmalig zum Projekt hinzufügen:
+2. library erstmalig zum Projekt hinzufügen:
 	Im Projektordner ausführen: pipenv install paketname
 
-3. Alle fehlenden Pakete des Projekts automatisch installieren:
+3. Alle fehlenden libraries des Projekts automatisch installieren:
 	Im Projektordner ausführen: pipenv install
 
 4. Befehl ausführen (in der virtualenv mit den installierten Paketen):
