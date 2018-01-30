@@ -12,8 +12,8 @@ from keras.models import Model
 from keras.layers import Dense, GlobalAveragePooling2D, Dropout
 from keras import backend as K
 
-import utilities as ut
 import keras_tools as tools
+import utilities as ut
 
 # Use pretrained model as described in https://keras.io/applications/
 

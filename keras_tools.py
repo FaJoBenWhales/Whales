@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 from keras.preprocessing import image
 from keras import backend as K
 
+import keras_model
 import utilities as ut
 
 # global variables
@@ -64,13 +65,13 @@ def save_learning_curves(history, run_name, base_path="plots/"):
                  title=run_name, path=fn_accuracies)
 
 
-def draw_num_classes_graphs():
+def draw_num_classes_graphs(epochs=100):
     """Train network and save learning curves for different values for num_classes."""
     values = [10, 50, 100, 250, 1000, 4000]
     for num_classes in values:
         print("Training model on {} most common classes.".format(num_classes))
-        model = create_pretrained_model(num_classes=num_classes)
-        histories = train(model, epochs=50, num_classes=num_classes)
+        model = keras_model.create_pretrained_model(num_classes=num_classes)
+        histories = keras_model.train(model, epochs, num_classes=num_classes)
         run_name = get_run_name("{}classes".format(num_classes))
         save_learning_curves(histories, run_name)
         csv_path = os.path.join("plots/", run_name, "data.csv")
