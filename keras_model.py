@@ -10,6 +10,7 @@ from keras.applications.inception_v3 import InceptionV3, preprocess_input
 from keras.preprocessing import image
 from keras.models import Model
 from keras.layers import Dense, GlobalAveragePooling2D, Dropout
+from keras import optimizers
 from keras import backend as K
 
 import utilities as ut
@@ -17,32 +18,55 @@ import keras_tools as tools
 
 # Use pretrained model as described in https://keras.io/applications/
 
-def create_pretrained_model(two_layers=True, num_classes=10):
-    # load pre-trained model
-    base_model = InceptionV3(weights='imagenet', include_top=False)
+def create_pretrained_model(config_dict, num_classes=10):
+    base_model = config_dict['base_model']
+    activation = config_dict['activation']
+    num_layers = config_dict['num_layers']
+    num_units = []
+    for i in range(num_layers):
+        num_units[i] = config_dict['num_units_' + str(i)]
+    learning_rate = config_dict['learning_rate']
+    optimizer = config_dict['activation']
+    dropout = []
+    for i in range(num_layers):
+        dropout[i] = config_dict['dropout_' + str(i)]
     
-    x = base_model.output
+    # load pre-trained model
+    if base_model == 'InceptionV3':
+        pretrained_model = InceptionV3(weights='imagenet', include_top=False)
+    else:
+        raise NotImplementedError("Unknown base model: {}".format(base_model))
+    
+    x = pretrained_model.output
     x = GlobalAveragePooling2D()(x)
-    x = Dense(1024, activation='relu')(x)
-    if two_layers:
-        # recommended by
-        # https://towardsdatascience.com/transfer-learning-using-keras-d804b2e04ef8
-        x = Dropout(0.5)(x)
-        x = Dense(1024, activation="relu")(x)
+    for i in range(num_layers):
+        x = Dense(num_units[i], activation=activation)(x)
+        x = Dropout(dropout[i])(x)
+    
     predictions = Dense(num_classes, activation='softmax')(x)
     
-    model = Model(inputs=base_model.input, outputs=predictions)
+    model = Model(inputs=pretrained_model.input, outputs=predictions)
     
     # train only the top classifier layers
     # i.e. freeze all convolutional InceptionV3 layers
-    for layer in base_model.layers:
+    for layer in pretrained_model.layers:
         layer.trainable = False
     
     # compile the model (should be done *after* setting layers to
     # non-trainable)
     # metrics='accuracy' causes the model to store and report accuracy (train
     # and validate)
-    model.compile(optimizer='rmsprop',
+
+    if optimizer == 'SGD':
+        opt = optimizers.SGD(lr=learning_rate)
+    elif optimizer == 'Adam':
+        opt = optimizers.Adam(lr=learning_rate)
+    elif optimizer == 'RMSProp':
+        opt = optimizers.RMSProp(lr=learning_rate)
+    else:
+        raise NotImplementedError("Unknown optimizer: {}".format(optimizer))
+        
+    model.compile(optimizer=opt,
                   loss='categorical_crossentropy',
                   metrics=['accuracy'])
     return model
@@ -59,8 +83,10 @@ def train_cross_validation(model, epochs=20, cross_validation_iterations=5,
     return histories
 
 
-def train(model, epochs=20, num_classes=10, save_path=None, batch_size=16,
+def train(model, config_dict, epochs=20, num_classes=10, save_path=None,
           train_dir="data/model_train", valid_dir="data/model_valid"):
+    batch_size = config_dict['batch_size']
+    
     # create new environment with new random train / valid split
     num_train_imgs, num_valid_imgs = tools.prepare_environment(num_classes)
 
@@ -105,6 +131,7 @@ def train(model, epochs=20, num_classes=10, save_path=None, batch_size=16,
         model.save(save_path)
         
     return hist.history
+    # TODO: we need to return (loss, runtime, learning_curve)
 
 
 def main():

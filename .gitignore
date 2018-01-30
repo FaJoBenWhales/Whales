@@ -26,4 +26,7 @@ Pipfile.lock
 data/
 venv/
 tmp/
+HpBandSter/
+dist/
+hpbandster.egg-info/
 *.h5
