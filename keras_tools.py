@@ -14,7 +14,6 @@ import matplotlib.pyplot as plt
 from keras.preprocessing import image
 from keras import backend as K
 
-import keras_model
 import utilities as ut
 
 # global variables
@@ -23,6 +22,9 @@ train_csv = "data/model_train.csv"
 valid_dir = "data/model_valid"
 valid_csv = "data/model_valid.csv"
 max_preds = 5    # number of ranked predictions
+num_train_imgs = 0
+num_valid_imgs = 0
+
 
 # Create training environment for training data.
 def prepare_environment(num_classes=10, data_split_ratio=0.8):
@@ -65,13 +67,13 @@ def save_learning_curves(history, run_name, base_path="plots/"):
                  title=run_name, path=fn_accuracies)
 
 
-def draw_num_classes_graphs(epochs=100):
+def draw_num_classes_graphs():
     """Train network and save learning curves for different values for num_classes."""
     values = [10, 50, 100, 250, 1000, 4000]
     for num_classes in values:
         print("Training model on {} most common classes.".format(num_classes))
-        model = keras_model.create_pretrained_model(num_classes=num_classes)
-        histories = keras_model.train(model, epochs, num_classes=num_classes)
+        model = create_pretrained_model(num_classes=num_classes)
+        histories = train(model, epochs=50, num_classes=num_classes)
         run_name = get_run_name("{}classes".format(num_classes))
         save_learning_curves(histories, run_name)
         csv_path = os.path.join("plots/", run_name, "data.csv")
@@ -125,41 +127,43 @@ def print_data_info(train_dir="data/model_train", batch_size=16):
     #print(num_train_imgs)
 
 
-def print_model_test_info(model, num_classes=10, steps=10, batch_size=16):
+
+def print_model_test_info(model, num_classes):
     # try to verify on test data --> no success so far
     
-    # use all training data of the first num_classes whales a test data.
+    # use all training data of the first num_classes whales as test data.
     # no good practice, but all training data have been augmented, so at least some indication
     # about predictive power of model
+    
+    all_train_dir = "data/train"     # directory with original kaggle training data
+    all_train_csv = "data/train.csv" # original kaggle train.csv file    
     test_dir = "data/model_test"
     test_csv = "data/model_test.csv"
-    num_train_imgs, num_valid_imgs = ut.create_small_case(
-        sel_whales=np.arange(1, num_classes + 1),  # whales to be considered
-        train_dir=test_dir,
-        train_csv=test_csv,
-        valid_dir=None,     # no validation, copy all data into test_dir "data/model_test"
-        valid_csv=None,
-        train_valid=1.,
-        sub_dirs=True) 
+    batch_size = 16     # used for training as well as validation
     
-    # for test Purposes !!!
+    num_train_imgs, num_valid_imgs = ut.create_small_case(
+        sel_whales = np.arange(1,num_classes+1),  # whales to be considered
+        all_train_dir = all_train_dir,
+        all_train_csv = all_train_csv,
+        train_dir = test_dir,
+        train_csv = test_csv,
+        valid_dir = None,     # no validation, copy all data into test_dir "data/model_test"
+        valid_csv = None,
+        train_valid = 1.,
+        sub_dirs = True) 
 
-    # valid_gen = image.ImageDataGenerator(preprocessing_function=preprocess_input)
     test_gen = image.ImageDataGenerator(
-        # featurewise_center=True,
-        # featurewise_std_normalization=True,
-        rescale=1./255,
-        # preprocessing_function=preprocess_input,   # model specific function
-        fill_mode="nearest")
+        rescale = 1./255,
+        fill_mode = "nearest")
 
     test_flow = test_gen.flow_from_directory(
         test_dir,
-        # color_mode="grayscale",
-        batch_size=batch_size,     
-        target_size=(299,299),
-        class_mode="categorical")    # use "None" ??
+        # color_mode = "grayscale",
+        batch_size = batch_size,     
+        target_size = (299,299),
+        class_mode = None)    # use "categorical" ??
     
-    preds = model.predict_generator(test_flow, verbose=1, steps=steps)
+    preds = model.predict_generator(test_flow, verbose = 1)
 
     whale_class_map = (test_flow.class_indices)           # get dict mapping whalenames --> class_no
     class_whale_map = ut.make_label_dict(directory=test_dir) # get dict mapping class_no --> whalenames
@@ -172,9 +176,8 @@ def print_model_test_info(model, num_classes=10, steps=10, batch_size=16):
     print("preds[:10]")
     print(preds[:10])
     
-    # ge list of model predictions: one ordered list of maxpred whalenames per image
+    # get list of model predictions: one ordered list of maxpred whalenames per image
     top_k = preds.argsort()[:, -max_preds:][:, ::-1]
-    # top_k = preds.argsort()[:, -max_preds:]
     model_preds = [([class_whale_map[i] for i in line]) for line in top_k]  
 
     # get list of true labels: one whalename per image
@@ -182,17 +185,20 @@ def print_model_test_info(model, num_classes=10, steps=10, batch_size=16):
     true_labels = []
     for fn in test_flow.filenames:
         offset, filename = fn.split('/')
-        whale = [line[1] for line in test_list if line[0] == filename][0]
+        whale = [line[1] for line in test_list if line[0]==filename][0]
         true_labels.append(whale)
 
-    print("model predictions: \n", np.array(model_preds)[0:20])
-    print("true labels \n", np.array(true_labels)[0:20])
+    print("model predictions: \n", np.array(model_preds)[0:10])
+    print("true labels \n", np.array(true_labels)[0:10])
+    
+    # compute accuracy by hand
+    TP_List = [(1 if model_preds[i][0]==true_labels[i] else 0) for i in range(len(true_labels))]
+    acc = np.sum(TP_List) / len(true_labels)
+    print("{} true predictions out of {}: accurracy: {} ".format(np.sum(TP_List),len(true_labels),acc))
 
     MAP = ut.mean_average_precision(model_preds, true_labels, max_preds)
     print("MAP", MAP)
 
-    for i in range(10):
-        Dummy_map = ut.Dummy_MAP(probs = 'weighted', distributed_as = train_csv, image_no = len(test_list))
-        print("Dummy MAP weighted", Dummy_map)
-
-    # MAP only slightly higher than average dummy MAP
+    # for comparison compute MAP generated by Dummy model
+    Dummy_map = np.mean([ut.Dummy_MAP(probs = 'weighted', distributed_as = train_csv, image_no = len(test_list)) for i in range(5)])
+    print("MAP of Dummy Model averaged over 5 runs: ", Dummy_map)

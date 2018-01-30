@@ -12,8 +12,8 @@ from keras.models import Model
 from keras.layers import Dense, GlobalAveragePooling2D, Dropout
 from keras import backend as K
 
-import keras_tools as tools
 import utilities as ut
+import keras_tools as tools
 
 # Use pretrained model as described in https://keras.io/applications/
 
@@ -48,6 +48,24 @@ def create_pretrained_model(two_layers=True, num_classes=10):
     return model
 
 
+def unfreeze_cnn_layers(model):
+    # we chose to train the top 2 inception blocks, i.e. we will freeze
+    # the first 249 layers and unfreeze the rest:
+    for layer in model.layers[:249]:
+       layer.trainable = False
+    for layer in model.layers[249:]:
+       layer.trainable = True
+
+    # we need to recompile the model for these modifications to take effect
+    # we use SGD with a low learning rate
+    from keras.optimizers import SGD
+    model.compile(optimizer=SGD(lr=0.0001, momentum=0.9), loss='categorical_crossentropy', metrics=['accuracy'])
+    # model.compile(optimizer=SGD(lr=0.0001, momentum=0.9), loss='categorical_crossentropy')
+    
+    print("\n ****** unfrozen 2 top CNN layers ******")
+    return model
+
+
 def train_cross_validation(model, epochs=20, cross_validation_iterations=5,
                            num_classes=10, save_path=None):
     histories = []
@@ -55,15 +73,22 @@ def train_cross_validation(model, epochs=20, cross_validation_iterations=5,
         path_components = save_path.split(os.extsep)
         path = ".".join(path_components[:-1] + [i] + path_components[-1])
         hist = train_and_save(model, epochs, num_classes, save_path)
-        histories.append(hist)
+        histories.extend(hist)
     return histories
 
 
-def train(model, epochs=20, num_classes=10, save_path=None, batch_size=16,
+def train(model, epochs=20, cnn_epochs = 0, num_classes=10, save_path=None, batch_size=16, create_env=True, 
           train_dir="data/model_train", valid_dir="data/model_valid"):
     # create new environment with new random train / valid split
-    num_train_imgs, num_valid_imgs = tools.prepare_environment(num_classes)
-
+    global num_train_imgs, num_valid_imgs    
+    
+    if create_env:
+        num_train_imgs, num_valid_imgs = tools.prepare_environment(num_classes)
+    else:
+        if num_train_imgs==0 or (num_valid_imgs==0 and valid_dir!=None):
+            print("call train with create_env at least once !")
+            
+    histories = []
     train_gen = image.ImageDataGenerator(
         # featurewise_center=True,
         # featurewise_std_normalization=True,
@@ -92,19 +117,37 @@ def train(model, epochs=20, num_classes=10, save_path=None, batch_size=16,
         valid_dir,
         target_size=(299,299),
         class_mode="categorical") 
-
+    
     hist = model.fit_generator(
         train_flow, 
-        steps_per_epoch=num_train_imgs//batch_size,
+        steps_per_epoch = num_train_imgs//batch_size,
         verbose=2, 
-        validation_data=valid_flow,   # to be used later
-        validation_steps=num_valid_imgs//batch_size,
+        validation_data = valid_flow,   # to be used later
+        validation_steps = num_valid_imgs//batch_size,
         epochs=epochs)
+
+    history = hist.history    
+    
+    if cnn_epochs > 0:
+        model = unfreeze_cnn_layers(model)
+        hist_cnn = model.fit_generator(
+            train_flow, 
+            steps_per_epoch = num_train_imgs//batch_size,
+            verbose = 2, 
+            validation_data = valid_flow,   # to be used later
+            validation_steps = num_valid_imgs//batch_size,
+            epochs=cnn_epochs)
+
+        for key in history.keys():
+            if type(history[key]) == list:
+                history[key].extend(hist_cnn.history[key])
 
     if save_path is not None:
         model.save(save_path)
-        
-    return hist.history
+ 
+    histories.append(history)
+
+    return histories
 
 
 def main():
