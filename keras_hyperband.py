@@ -39,7 +39,7 @@ def create_config_space():
 def objective_function(config, epoch=127, **kwargs):
     """Evaluate success of configuration config."""
     model = keras_model.create_pretrained_model(config)
-    loss, runtime, learning_curve = model.train(config)
+    loss, runtime, learning_curve = keras_model.train(config)
     return loss, runtime, learning_curve
 
 
