@@ -1,6 +1,4 @@
-#
 # emacs files
-#
 *~
 \#*\#
 /.emacs.desktop
@@ -10,23 +8,22 @@ auto-save-list
 tramp
 .\#*
 
-#
 # PyCharm files
-#
 .idea/
 
-#
 # python 
-#
 __pycache__
+*.pyc
 
-#
 # jupyter-notebook
-#
 .ipynb_checkpoints/
 
-#
-# project-specific
-#
-data/
+# pipenv
+Pipfile
+Pipfile.lock
 
+# project-specific
+data/
+venv/
+tmp/
+*.h5

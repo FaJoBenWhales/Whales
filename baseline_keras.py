@@ -79,7 +79,7 @@ def main():
     predictions = model.predict_generator(flow, verbose=1) # steps=15611//32)
     top_k = predictions.argsort()[:, -4:][:, ::-1]
     classes = [" ".join([labels[i] for i in line]) for line in top_k]
-    filenames = flow.filenames
+    filenames = flow.filenames  # [os.path.basename(f) for f in flow.filenames]
     csv_list = zip(filenames, classes)
     write_csv(csv_list, file_name=OUTPUT_FILE)
 

@@ -1,0 +1,10 @@
+Benötigte Bibliotheken:
+
+scikit-image
+tensorflow (cpu oder gpu)
+Keras
+h5py
+
+KEIN pipenv mehr für das Projekt.
+
+
