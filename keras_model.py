@@ -153,7 +153,7 @@ def train(model, epochs=20, cnn_epochs = 0, num_classes=10, save_path=None, batc
 def main():
     print("Run complete script: Printing data info, train, print test results.")
     tools.print_data_info()
-    model = create_pretrained_model()
+    model = create_pretrained_model(num_classes=10)
     histories = train(model, epochs=2)
     print(histories)
     run_name = tools.get_run_name()
@@ -161,7 +161,7 @@ def main():
     ut.write_csv_dict(histories,
                       keys=['loss', 'acc', 'val_loss', 'val_acc'],
                       filename=run_name + '.csv')
-    # tools.print_model_test_info(model,7)
+    tools.print_model_test_info(model,num_classes=10)  # num_classes must be as defined in model !
 
 
 if __name__ == "__main__":
