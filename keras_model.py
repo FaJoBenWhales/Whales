@@ -161,7 +161,7 @@ def main():
     ut.write_csv_dict(histories,
                       keys=['loss', 'acc', 'val_loss', 'val_acc'],
                       filename=run_name + '.csv')
-    # tools.print_model_test_info(model,7)
+    tools.print_model_test_info(model)
 
 
 if __name__ == "__main__":
