@@ -127,7 +127,6 @@ def print_data_info(train_dir="data/model_train", batch_size=16):
     #print(num_train_imgs)
 
 
-
 def print_model_test_info(model, num_classes):
     # try to verify on test data --> no success so far
     
@@ -150,23 +149,23 @@ def print_model_test_info(model, num_classes):
         valid_dir = None,     # no validation, copy all data into test_dir "data/model_test"
         valid_csv = None,
         train_valid = 1.,
-        sub_dirs = True) 
-
+        sub_dirs = False)     # for prediction write all images in one single subdirectory "whales" von test_dir
+    
     test_gen = image.ImageDataGenerator(
         rescale = 1./255,
         fill_mode = "nearest")
 
     test_flow = test_gen.flow_from_directory(
         test_dir,
+        shuffle=False,        
         # color_mode = "grayscale",
         batch_size = batch_size,     
         target_size = (299,299),
         class_mode = None)    # use "categorical" ??
-    
     preds = model.predict_generator(test_flow, verbose = 1)
 
     whale_class_map = (test_flow.class_indices)           # get dict mapping whalenames --> class_no
-    class_whale_map = ut.make_label_dict(directory=test_dir) # get dict mapping class_no --> whalenames
+    class_whale_map = ut.make_label_dict(directory="data/model_train") # get dict mapping class_no --> whalenames
     print("whale_class_map:")
     print(whale_class_map)
     print("class_whale_map:")
