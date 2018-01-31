@@ -37,7 +37,7 @@ def sort_by_labels(num_labels,
     
 
 def train_classifier():
-    cmd = ["python3", "retrain.py", "--image_dir", "baseline", "--validation_batch_size=-1", "--how_many_training_steps=8000"]
+    cmd = ["python3", "tensorflow_baseline_script.py", "--image_dir", "baseline", "--validation_batch_size=-1", "--how_many_training_steps=8000"]
     # python3 retrain.py --image_dir baseline --validation_batch_size=-1 --how_many_training_steps=8000"
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     for line in iter(process.stdout.readline, ''):
@@ -50,7 +50,7 @@ if __name__ == "__main__":
         print("Done creating environment.")
     if("--run_retrain_script" in sys.argv):
         print("please start the retrain.py script manualy:")
-        print("\"python3 retrain.py --image_dir baseline --validation_batch_size=-1 --how_many_training_steps=8000\"")
+        print("\"python3 tensorflow_baseline_script.py --image_dir baseline --validation_batch_size=-1 --how_many_training_steps=8000\"")
         l = input("Try to launch it with this script anyway? ")
         if l in ["Yes", "yes", "Y", "y", "J", "j", "Ja", "ja"]:
             print("Retrain last layer of Inception v3 model.")
