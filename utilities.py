@@ -9,6 +9,8 @@ import csv
 import numpy as np
 import random
 import shutil
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 # read train.csv, return list of tuples (filename,whale_name)

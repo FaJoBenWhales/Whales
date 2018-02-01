@@ -10,7 +10,6 @@ from keras.applications.inception_v3 import InceptionV3, preprocess_input
 from keras.preprocessing import image
 from keras.models import Model
 from keras.layers import Dense, GlobalAveragePooling2D, Dropout
-from keras import backend as K
 
 import utilities as ut
 import keras_tools as tools
@@ -66,27 +65,16 @@ def unfreeze_cnn_layers(model):
     return model
 
 
-def train_cross_validation(model, epochs=20, cross_validation_iterations=5,
-                           num_classes=10, save_path=None):
-    histories = []
-    for i in range(cross_validation_iterations):
-        path_components = save_path.split(os.extsep)
-        path = ".".join(path_components[:-1] + [i] + path_components[-1])
-        hist = train_and_save(model, epochs, num_classes, save_path)
-        histories.extend(hist)
-    return histories
-
-
-def train(model, epochs=20, cnn_epochs = 0, num_classes=10, save_path=None, batch_size=16, create_env=True, 
-          train_dir="data/model_train", valid_dir="data/model_valid"):
-    # create new environment with new random train / valid split
-    global num_train_imgs, num_valid_imgs    
+def train(model, num_classes, epochs=20, cnn_epochs = 0, save_path=None, batch_size=16,  
+          train_dir="data/model_train", valid_dir="data/model_valid", train_valid_split=0.7):
     
-    if create_env:
-        num_train_imgs, num_valid_imgs = tools.prepare_environment(num_classes)
-    else:
-        if num_train_imgs==0 or (num_valid_imgs==0 and valid_dir!=None):
-            print("call train with create_env at least once !")
+    # create new environment with new random train / valid split
+    num_train_imgs, num_valid_imgs = ut.create_small_case(
+        sel_whales=np.arange(1, num_classes+1),
+        train_dir=train_dir,
+        valid_dir=valid_dir,
+        train_valid=train_valid_split,
+        sub_dirs=True)
             
     histories = []
     train_gen = image.ImageDataGenerator(
@@ -151,25 +139,23 @@ def train(model, epochs=20, cnn_epochs = 0, num_classes=10, save_path=None, batc
 
 
 def main():
-    print("Run complete script: Printing data info, train, print test results.")
-    tools.print_data_info()
-    model = create_pretrained_model(num_classes=10)
-    histories = train(model, epochs=2)
+    print("Run short training with InceptionV3 and save results.")
+    num_classes = 10
+    model = create_pretrained_model(num_classes=num_classes)
+    histories = train(model, num_classes, epochs=2, cnn_epochs=2)
+    print("HISTORIES:")
     print(histories)
     run_name = tools.get_run_name()
     tools.save_learning_curves(histories, run_name)
+    csv_path = os.path.join("plots/", run_name, "data.csv")
     ut.write_csv_dict(histories,
                       keys=['loss', 'acc', 'val_loss', 'val_acc'],
-                      filename=run_name + '.csv')
-    tools.print_model_test_info(model,num_classes=10)  # num_classes must be as defined in model !
+                      csv_path)
 
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
         main()
-        exit()
-    if "--prepare-only" in sys.argv:
-        tools.prepare_environment()
         exit()
     if "--class-graph" in sys.argv:
         tools.draw_num_classes_graphs()
