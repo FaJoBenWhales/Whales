@@ -127,6 +127,21 @@ def print_data_info(train_dir="data/model_train", batch_size=16):
     #print(num_train_imgs)
 
 
+def visualize_model(model=None, filename="InceptionV3_visualization.png"):
+    """
+    Write graph visualization of Keras Model to file.
+    Default model is InceptionV3
+    """
+    from keras.models import Model
+    from keras.applications.inception_v3 import InceptionV3
+    from keras.utils import plot_model
+    if model is None:
+        p_model = InceptionV3(weights='imagenet', include_top=False)
+    else:
+        p_model = model
+    plot_model(p_model, to_file=filename)
+
+
 def print_model_test_info(model, num_classes):
     # try to verify on test data --> no success so far
     
