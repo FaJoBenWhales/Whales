@@ -364,3 +364,17 @@ def save_plot(x, ys, xlabel, ylabel, path, title=""):
     plt.legend(ys.keys())
     plt.ylabel(ylabel)
     plt.savefig(path)
+
+
+def print_number_of_Whales():
+    csv_list = read_csv()
+    w = get_whales(csv_list)
+    i = 0
+    while(w[1][i] > 1):
+        i = i + 1
+    print("There are", i, "whales with at least 2 train images.")
+    print("There are", len(w[1]), "whales with at least 1 train image.")
+
+
+if __name__ == "__main__":
+    print_number_of_Whales()
