@@ -30,10 +30,8 @@ def _create_pretrained_model(config_dict, num_classes):
     activation = config_dict['activation']
     dropout = config_dict["dropout"]
     if dropout==True:
-        for i in range(num_layers):
+        for i in range(num_dense_layers):
             dropout_list.append(config_dict['dropout_' + str(i)])
-    cnn_unlock_epoch = config_dict["cnn_unlock_epoch"]
-    cnn_num_unlocked = config_dict["cnn_num_unlocked"]
     optimizer = config_dict['optimizer']
     learning_rate = config_dict['learning_rate']
     
@@ -49,7 +47,7 @@ def _create_pretrained_model(config_dict, num_classes):
     #
     x = pretrained_model.output
     x = GlobalAveragePooling2D()(x)
-    for i in range(num_layers):
+    for i in range(num_dense_layers):
         x = Dense(num_dense_units_list[i], activation=activation)(x)
         if dropout==True:
             x = Dropout(dropout_list[i])(x)
@@ -80,8 +78,8 @@ def _create_pretrained_model(config_dict, num_classes):
 
 def _unfreeze_cnn_layers(model, how_many=2):
     # for InceptionV3 len(model.layers)==311
-    # last two inceptionV3 blocks are less or equal 63 layers
-    thresh = 311-how_many
+    # (last two inceptionV3 blocks are less or equal 63 layers)
+    thresh = 311 - how_many
     for layer in model.layers[:thresh]:
        layer.trainable = False
     for layer in model.layers[thresh:]:
@@ -93,7 +91,7 @@ def _unfreeze_cnn_layers(model, how_many=2):
     model.compile(optimizer=SGD(lr=0.0001, momentum=0.9), loss='categorical_crossentropy', metrics=['accuracy'])
     # model.compile(optimizer=SGD(lr=0.0001, momentum=0.9), loss='categorical_crossentropy')
     
-    print("\n ****** unfrozen 2 top CNN layers ******")
+    print("\n ****** unfrozen some top CNN layers ******")
     return model
 
 
@@ -199,13 +197,13 @@ def train(config_dict,
 
 
 def main():
-    print("Run short training with InceptionV3 and save results.")
+    print("****** Run short training with InceptionV3 and save results. ******")
     num_classes = 10
     config_dict = {'base_model': 'InceptionV3', 
                    'num_dense_layers': 3,
-                   'num_units_0': 500,
-                   'num_units_1': 250,
-                   'num_units_2': 50,
+                   'num_dense_units_0': 500,
+                   'num_dense_units_1': 250,
+                   'num_dense_units_2': 50,
                    'activation': 'relu',
                    'dropout': True,
                    'dropout_0': 0.5,
@@ -213,10 +211,10 @@ def main():
                    'dropout_2': 0.5,
                    'optimizer': "SGD",
                    'learning_rate': 0.001,
-                   'cnn_unlock_epoch': 3,
-                   'cnn_num_unlock': 35,
+                   'cnn_unlock_epoch': 8,
+                   'cnn_num_unlock': 63,  # cost surprisingly little runtime
                    'batch_size': 16}
-    histories = train(config_dict, epochs=7, num_classes=num_classes)
+    histories = train(config_dict, epochs=16, num_classes=num_classes)
     print("HISTORIES:")
     print(histories)
     run_name = tools.get_run_name()
