@@ -9,37 +9,119 @@ from hpbandster.distributed.worker import Worker
 
 import keras_model
 
-# Model the following hyperparameter space:
-#   num_layers: number of dense classifier layers on top (1 to 4?)
-#   (num_convs: number of additional convolutional layers before dense layers)
-#   num_units_0 ... num_units_3: number of units by layer
-#   (cnn parameters for convolutional layers)
-#   base_model: InceptionV3, ...?
-#   learning_rate
-#   optimizer: Adam, SGD, RMSProp
-#   (optimizer params (momentum etc.))
-#   dropout_0 ... dropout_3: dropout probability by layer
-#   (l2_reg_0 ... l2_reg_3: L2 regularization parameter by layer)
-#   activation: relu, tanh
-#   (learning rate schedules)
-#   batch_size
-#   (trainable layers vs. locked layers)
-#   ... ?
-
-# (parameters in brackets: currently not used by keras_model.py)
 
 
-def create_config_space():
+def configuration_space_from_raw(hpRaw, hpRawConditions):
     cs = CS.ConfigurationSpace()
-    # TODO: implement config space as described above, cf. ex. 6 of lab
-    # course
+    # add hyperparameters
+    for hp in hpRaw:
+        if hp[4] == "float":
+            cs.add_hyperparameter(
+                CS.UniformFloatHyperparameter(
+                    hp[0],
+                    lower=hp[1][0],
+                    upper=hp[1][1],
+                    default_value=hp[2],
+                    log=hp[3]
+                )
+            )
+        elif hp[4] == "int":
+            cs.add_hyperparameter(
+                CS.UniformIntegerHyperparameter(
+                    hp[0],
+                    lower=hp[1][0],
+                    upper=hp[1][1],
+                    default_value=hp[2],
+                    log=hp[3]
+                )
+            )
+        elif (hp[4] == "cat"):
+            cs.add_hyperparameter(
+                CS.CategoricalHyperparameter(
+                    hp[0],
+                    hp[1]
+                )
+            )
+        else:
+            raise Exception("unknown hp type in hpRawList")
+
+    # add conditions
+    for cond in hpRawConditions:
+        if cond[1] == "eq":
+            cs.add_condition(
+                CS.EqualsCondition(
+                    cs.get_hyperparameter(cond[0]),
+                    cs.get_hyperparameter(cond[2]),
+                    cond[3]
+                )
+            )
+        elif cond[1] == "geq":
+            cs.add_condition(
+                CS.GreaterThanCondition(
+                    cs.get_hyperparameter(cond[0]),
+                    cs.get_hyperparameter(cond[2]),
+                    cond[3]
+                )
+            )
+        else:
+            raise Exception("unknown condition type in hpRawConditions")
+        
     return cs
+
+
+# Model the following hyperparameter space:
+#   base_model: InceptionV3, ...?
+#   num_dense_layers: number of dense classifier layers on top (1 to 4?)
+#   num_dense_units_0 ... num_dense_units_3: number of units per dense layer
+#   activation: relu, tanh
+#   dropout_0 ... dropout_3: dropout probability by layer
+#   cnn_unlock_epoch: when to unlock parts of the cnn
+#   cnn_num_unlocked: number of pretrained layers to unlock
+#   optimizer: Adam, SGD, RMSProp
+#   learning_rate
+#   batch_size
+def create_config_space():
+    hpRaw = [
+        #<    name              >   <  Range       >      <Default>     <Log>   <Type>
+        ["base_model",              ["InceptionV3"],    "InceptionV3",  None,   "cat"],
+        ["num_dense_layers",        [1, 4],                 2,          False,  "int"],
+        ["num_dense_units_0",       [50, 4000],             1024,       False,  "int"],
+        ["num_dense_units_1",       [50, 4000],             1024,       False,  "int"],
+        ["num_dense_units_2",       [50, 4000],             1024,       False,  "int"],
+        ["num_dense_units_3",       [50, 4000],             1024,       False,  "int"],
+        ["activation",              ["relu", "tanh"],       "relu",     None,   "cat"],
+        ["dropout"],                [True, False],          False,      None,   "cat"],
+        ["dropout_0",               [0.0, 1.0],             0.5,        False,  "float"],
+        ["dropout_1",               [0.0, 1.0],             0.5,        False,  "float"],
+        ["dropout_2",               [0.0, 1.0],             0.5,        False,  "float"],
+        ["dropout_3",               [0.0, 1.0],             0.5,        False,  "float"],
+        ["optimizer",               ["Adam", "SGD", 
+                                     "RMSProp"],            "SGD",      None,   "cat"],
+        ["learning_rate",           [0.00001, 0.1],         0.001,      True,   "float"],
+        ["cnn_unlock_epoch",        [0, 1000],              200,        False,  "int"],
+        ["cnn_num_unlock",          [0, 63],                 0,         False,  "int"],
+        ["batch_size",              [16, 64],               32,         True,   "int"],
+    ]
+    hpRawConditions = [
+        #< conditional hp name      >   <cond. Type>    <cond. variable>        <cond. value>
+        ["num_dense_units_1",           "geq",          "num_dense_layers",     2],
+        ["num_dense_units_2",           "geq",          "num_dense_layers",     3],
+        ["num_dense_units_3",           "eq",           "num_dense_layers",     4],
+        ["dropout_0",                   "eq",           "dropout",              True],
+        ["dropout_1",                   "eq",           "dropout",              True],
+        ["dropout_2",                   "eq",           "dropout",              True],
+        ["dropout_3",                   "eq",           "dropout",              True],
+        ["dropout_1",                   "geq",          "num_dense_layers",     2],
+        ["dropout_2",                   "geq",          "num_dense_layers",     3],
+        ["dropout_3",                   "eq",           "num_dense_layers",     4],
+    ]
+    return configuration_space_from_raw(hpRaw, hpRawConditions)
 
 
 def objective_function(config, epoch=127, **kwargs):
     """Evaluate success of configuration config."""
     model = keras_model.create_pretrained_model(config)
-    loss, runtime, learning_curve = keras_model.train(config)
+    loss, runtime, learning_curve = keras_model.train(model, config)
     return loss, runtime, learning_curve
 
 

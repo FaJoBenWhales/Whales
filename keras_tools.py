@@ -54,14 +54,26 @@ def draw_num_classes_graphs():
 
 
 
-def visualize_model(model=None, filename="InceptionV3_visualization.png"):
+def visualize_model(model=None, 
+                    filename="InceptionV3_visualization.png",
+                    show_shapes=False):
     """
     Write graph visualization of Keras Model to file.
     Default model is InceptionV3
     """
     if model is None:
-        p_model = InceptionV3(weights='imagenet', include_top=False)
+        model = InceptionV3(weights='imagenet', include_top=False)
     else:
-        p_model = model
-    keras.utils.plot_model(p_model, to_file=filename)
+        model = model
+    keras.utils.print_summary(model)
+    print("---")
+    print("len(model.layers)", len(model.layers))
+    print("saveing graph visualization to file")
+    keras.utils.plot_model(model, show_shapes=show_shapes, to_file=filename)
+    print("saved graph visualization to file")
 
+
+if __name__ == "__main__":
+    import sys
+    if "--visualize_inceptionV3" in sys.argv:
+        visualize_model()

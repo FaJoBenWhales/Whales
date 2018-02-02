@@ -17,45 +17,49 @@ import keras_tools as tools
 
 # Use pretrained model as described in https://keras.io/applications/
 
-def create_pretrained_model(config_dict, num_classes=10):
+def _create_pretrained_model(config_dict, num_classes):
+    #
+    # extract relevant parts of configuration
+    #
+    num_dense_units_list = []
+    dropout_list = []
     base_model = config_dict['base_model']
+    num_dense_layers = config_dict['num_dense_layers']
+    for i in range(num_dense_layers):
+        num_dense_units_list.append(config_dict['num_dense_units_' + str(i)])
     activation = config_dict['activation']
-    num_layers = config_dict['num_layers']
-    num_units = []
-    for i in range(num_layers):
-        num_units.append(config_dict['num_units_' + str(i)])
-    learning_rate = config_dict['learning_rate']
+    dropout = config_dict["dropout"]
+    if dropout==True:
+        for i in range(num_layers):
+            dropout_list.append(config_dict['dropout_' + str(i)])
+    cnn_unlock_epoch = config_dict["cnn_unlock_epoch"]
+    cnn_num_unlocked = config_dict["cnn_num_unlocked"]
     optimizer = config_dict['optimizer']
-    dropout = []
-    for i in range(num_layers):
-        dropout.append(config_dict['dropout_' + str(i)])
+    learning_rate = config_dict['learning_rate']
     
+    #
     # load pre-trained model
+    #
     if base_model == 'InceptionV3':
         pretrained_model = InceptionV3(weights='imagenet', include_top=False)
     else:
         raise NotImplementedError("Unknown base model: {}".format(base_model))
-    
+    #
+    # add fully connected layers
+    #
     x = pretrained_model.output
     x = GlobalAveragePooling2D()(x)
     for i in range(num_layers):
-        x = Dense(num_units[i], activation=activation)(x)
-        x = Dropout(dropout[i])(x)
-    
+        x = Dense(num_dense_units_list[i], activation=activation)(x)
+        if dropout==True:
+            x = Dropout(dropout_list[i])(x)
     predictions = Dense(num_classes, activation='softmax')(x)
-    
+    #
+    # finish building combined model, lock parameters of pretrained part
+    #
     model = Model(inputs=pretrained_model.input, outputs=predictions)
-    
-    # train only the top classifier layers
-    # i.e. freeze all convolutional InceptionV3 layers
     for layer in pretrained_model.layers:
         layer.trainable = False
-    
-    # compile the model (should be done *after* setting layers to
-    # non-trainable)
-    # metrics='accuracy' causes the model to store and report accuracy (train
-    # and validate)
-
     if optimizer == 'SGD':
         opt = optimizers.SGD(lr=learning_rate)
     elif optimizer == 'Adam':
@@ -64,19 +68,23 @@ def create_pretrained_model(config_dict, num_classes=10):
         opt = optimizers.RMSprop(lr=learning_rate)
     else:
         raise NotImplementedError("Unknown optimizer: {}".format(optimizer))
-        
+    # compile the model (should be done *after* setting layers to
+    # non-trainable)
+    # metrics='accuracy' causes the model to store and report accuracy (train
+    # and validate)
     model.compile(optimizer=opt,
                   loss='categorical_crossentropy',
                   metrics=['accuracy'])
     return model
 
 
-def unfreeze_cnn_layers(model):
-    # we chose to train the top 2 inception blocks, i.e. we will freeze
-    # the first 249 layers and unfreeze the rest:
-    for layer in model.layers[:249]:
+def _unfreeze_cnn_layers(model, how_many=2):
+    # for InceptionV3 len(model.layers)==311
+    # last two inceptionV3 blocks are less or equal 63 layers
+    thresh = 311-how_many
+    for layer in model.layers[:thresh]:
        layer.trainable = False
-    for layer in model.layers[249:]:
+    for layer in model.layers[thresh:]:
        layer.trainable = True
 
     # we need to recompile the model for these modifications to take effect
@@ -89,19 +97,41 @@ def unfreeze_cnn_layers(model):
     return model
 
 
-def train(model, num_classes, config_dict, epochs=20, cnn_epochs = 0, save_path=None,
-          train_dir="data/model_train", valid_dir="data/model_valid", train_valid_split=0.7):
+def train(config_dict, 
+          epochs,
+          model=None,
+          num_classes=10,
+          save_model_path=None,
+          train_dir="data/model_train",
+          valid_dir="data/model_valid",
+          train_valid_split=0.7):
     
+    #
+    # extract relevant parts of configuration
+    #
+    cnn_unlock_epoch = config_dict["cnn_unlock_epoch"]
+    cnn_num_unlock = config_dict["cnn_num_unlock"]
     batch_size = config_dict['batch_size']
+    #
+    # get model to train, determine training times
+    #
+    if model is None:
+        model = _create_pretrained_model(config_dict, num_classes)
+    training_epochs_dense = cnn_unlock_epoch
+    training_epochs_wholemodel = epochs - training_epochs_dense
     
-    # create new environment with new random train / valid split
+    #
+    # prepare training data
+    #
+    
+    # create environment on filesystem with new random train/valid split
     num_train_imgs, num_valid_imgs = ut.create_small_case(
         sel_whales=np.arange(1, num_classes+1),
         train_dir=train_dir,
         valid_dir=valid_dir,
         train_valid=train_valid_split,
         sub_dirs=True)
-            
+    
     train_gen = image.ImageDataGenerator(
         # featurewise_center=True,
         # featurewise_std_normalization=True,
@@ -113,7 +143,7 @@ def train(model, num_classes, config_dict, epochs=20, cnn_epochs = 0, save_path=
         width_shift_range=0.3,
         height_shift_range=0.3,
         rotation_range=30)
-
+    
     train_flow = train_gen.flow_from_directory(
         train_dir,
         # save_to_dir="data/model_train/augmented",    
@@ -121,62 +151,72 @@ def train(model, num_classes, config_dict, epochs=20, cnn_epochs = 0, save_path=
         target_size=(299,299),
         batch_size=batch_size, 
         class_mode="categorical")
-
+    
     valid_gen = image.ImageDataGenerator(
         rescale=1./255,
         fill_mode="nearest")
-
+    
     valid_flow = valid_gen.flow_from_directory(
         valid_dir,
         target_size=(299,299),
-        class_mode="categorical") 
-
-    hist = model.fit_generator(
+        class_mode="categorical")
+    
+    #
+    # train fully connected part
+    #
+    hist_dense = model.fit_generator(
         train_flow, 
         steps_per_epoch=num_train_imgs//batch_size,
         verbose=2, 
-        validation_data=valid_flow,   # to be used later
+        validation_data=valid_flow,
         validation_steps=num_valid_imgs//batch_size,
-        epochs=epochs)
-
-    history = hist.history    
-    
-    if cnn_epochs > 0:
-        model = unfreeze_cnn_layers(model)
-        hist_cnn = model.fit_generator(
+        epochs=training_epochs_dense)
+    histories = hist_dense.history
+    #
+    # train the whole model with parts of the cnn unlocked (fixed optimizer!)
+    #
+    if training_epochs_wholemodel > 0:
+        model = _unfreeze_cnn_layers(model, how_many=cnn_num_unlock)
+        hist_wholemodel = model.fit_generator(
             train_flow, 
             steps_per_epoch = num_train_imgs//batch_size,
             verbose = 2, 
-            validation_data = valid_flow,   # to be used later
+            validation_data = valid_flow,
             validation_steps = num_valid_imgs//batch_size,
-            epochs=cnn_epochs)
-
-        for key in history.keys():
-            if type(history[key]) == list:
-                history[key].extend(hist_cnn.history[key])
-
-    if save_path is not None:
-        model.save(save_path)
+            epochs=training_epochs_wholemodel)
+        # concatenate training history
+        for key in histories.keys():
+            if type(histories[key]) == list:
+                histories[key].extend(hist_wholemodel.history[key])
     
+    #
+    # do final cleanup
+    #
+    if save_model_path is not None:
+        model.save(save_model_path)
     # TODO: we need to return (loss, runtime, learning_curve)
-    return history
+    return histories
 
 
 def main():
     print("Run short training with InceptionV3 and save results.")
     num_classes = 10
     config_dict = {'base_model': 'InceptionV3', 
-                   'activation': 'relu', 
-                   'num_layers': 2,
-                   'num_units_0': 1024,
-                   'num_units_1': 1024,
+                   'num_dense_layers': 3,
+                   'num_units_0': 500,
+                   'num_units_1': 250,
+                   'num_units_2': 50,
+                   'activation': 'relu',
+                   'dropout': True,
                    'dropout_0': 0.5,
                    'dropout_1': 0.5,
+                   'dropout_2': 0.5,
+                   'optimizer': "SGD",
                    'learning_rate': 0.001,
-                   'optimizer': 'RMSProp',
+                   'cnn_unlock_epoch': 3,
+                   'cnn_num_unlock': 35,
                    'batch_size': 16}
-    model = create_pretrained_model(config_dict, num_classes=num_classes)
-    histories = train(model, num_classes, config_dict, epochs=2, cnn_epochs=2)
+    histories = train(config_dict, epochs=7, num_classes=num_classes)
     print("HISTORIES:")
     print(histories)
     run_name = tools.get_run_name()
