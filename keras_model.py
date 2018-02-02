@@ -76,7 +76,6 @@ def train(model, num_classes, epochs=20, cnn_epochs = 0, save_path=None, batch_s
         train_valid=train_valid_split,
         sub_dirs=True)
             
-    histories = []
     train_gen = image.ImageDataGenerator(
         # featurewise_center=True,
         # featurewise_std_normalization=True,
@@ -108,10 +107,10 @@ def train(model, num_classes, epochs=20, cnn_epochs = 0, save_path=None, batch_s
     
     hist = model.fit_generator(
         train_flow, 
-        steps_per_epoch = num_train_imgs//batch_size,
+        steps_per_epoch=num_train_imgs//batch_size,
         verbose=2, 
-        validation_data = valid_flow,   # to be used later
-        validation_steps = num_valid_imgs//batch_size,
+        validation_data=valid_flow,   # to be used later
+        validation_steps=num_valid_imgs//batch_size,
         epochs=epochs)
 
     history = hist.history    
@@ -132,9 +131,7 @@ def train(model, num_classes, epochs=20, cnn_epochs = 0, save_path=None, batch_s
 
     if save_path is not None:
         model.save(save_path)
- 
-    histories.append(history)
-
+    
     return history
 
 
@@ -150,7 +147,7 @@ def main():
     csv_path = os.path.join("plots/", run_name, "data.csv")
     ut.write_csv_dict(histories,
                       keys=['loss', 'acc', 'val_loss', 'val_acc'],
-                      csv_path)
+                      filename=csv_path)
 
 
 if __name__ == "__main__":
