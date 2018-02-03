@@ -72,7 +72,7 @@ def configuration_space_from_raw(hpRaw, hpRawConditions, resolve_multiple='AND')
                         cs.get_hyperparameter(cond[0]),
                         cs.get_hyperparameter(cond[2]),
                         cond[3]))
-            elif cond[1] == "geq":
+            elif cond[1] == "gtr":
                 condition_objects.append(
                     CS.GreaterThanCondition(
                         cs.get_hyperparameter(cond[0]),
@@ -134,15 +134,15 @@ def get_keras_config_space():
     ]
     hpRawConditions = [
         #< conditional hp name      >   <cond. Type>    <cond. variable>        <cond. value>
-        ["num_dense_units_1",           "geq",          "num_dense_layers",     2],
-        ["num_dense_units_2",           "geq",          "num_dense_layers",     3],
+        ["num_dense_units_1",           "gtr",          "num_dense_layers",     1],
+        ["num_dense_units_2",           "gtr",          "num_dense_layers",     2],
         ["num_dense_units_3",           "eq",           "num_dense_layers",     4],
         ["dropout_0",                   "eq",           "dropout",              True],
         ["dropout_1",                   "eq",           "dropout",              True],
         ["dropout_2",                   "eq",           "dropout",              True],
         ["dropout_3",                   "eq",           "dropout",              True],
-        ["dropout_1",                   "geq",          "num_dense_layers",     2],
-        ["dropout_2",                   "geq",          "num_dense_layers",     3],
+        ["dropout_1",                   "gtr",          "num_dense_layers",     1],
+        ["dropout_2",                   "gtr",          "num_dense_layers",     2],
         ["dropout_3",                   "eq",           "num_dense_layers",     4],
     ]
     return configuration_space_from_raw(hpRaw, hpRawConditions, resolve_multiple='AND')
