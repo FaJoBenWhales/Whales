@@ -4,6 +4,7 @@
 import os
 import sys
 import numpy as np
+import time
 
 #import h5py
 from keras.applications.inception_v3 import InceptionV3, preprocess_input
@@ -104,6 +105,7 @@ def train(config_dict,
           valid_dir="data/model_valid",
           train_valid_split=0.7):
     
+    start_time = time.time()
     #
     # extract relevant parts of configuration
     #
@@ -192,8 +194,18 @@ def train(config_dict,
     #
     if save_model_path is not None:
         model.save(save_model_path)
-    # TODO: we need to return (loss, runtime, learning_curve)
-    return histories
+    
+    best_val_loss = None
+    for value in histories['val_loss']:
+        if best_val_loss is None or best_val_loss >= value:
+            best_val_loss = value
+    if len(histories['val_loss']) > 3:
+        val_loss_end = np.mean(np.array(histories['val_loss'])[-3:-1])
+    loss = np.mean(np.array([best_val_loss, val_loss_end]))
+    
+    runtime = time.time() - start_time
+#   return ((loss, runtime, learningcurve), all_histories)
+    return ((loss, runtime, histories['val_loss']), histories)
 
 
 def main():
@@ -214,7 +226,7 @@ def main():
                    'cnn_unlock_epoch': 8,
                    'cnn_num_unlock': 63,  # cost surprisingly little runtime
                    'batch_size': 16}
-    histories = train(config_dict, epochs=16, num_classes=num_classes)
+    _, histories = train(config_dict, epochs=16, num_classes=num_classes)
     print("HISTORIES:")
     print(histories)
     run_name = tools.get_run_name()

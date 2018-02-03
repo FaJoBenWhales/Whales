@@ -4,6 +4,7 @@ scikit-image
 tensorflow (cpu oder gpu)
 Keras
 h5py
+HpBandSter
 
 KEIN pipenv mehr für das Projekt.
 

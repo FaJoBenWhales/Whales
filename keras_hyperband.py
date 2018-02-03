@@ -11,9 +11,11 @@ import keras_model
 
 
 
-def configuration_space_from_raw(hpRaw, hpRawConditions):
+def configuration_space_from_raw(hpRaw, hpRawConditions, resolve_multiple='AND'):
     cs = CS.ConfigurationSpace()
+    #
     # add hyperparameters
+    #
     for hp in hpRaw:
         if hp[4] == "float":
             cs.add_hyperparameter(
@@ -45,27 +47,55 @@ def configuration_space_from_raw(hpRaw, hpRawConditions):
         else:
             raise Exception("unknown hp type in hpRawList")
 
+    #
     # add conditions
+    #
+    covered_conditions = dict()
     for cond in hpRawConditions:
-        if cond[1] == "eq":
-            cs.add_condition(
-                CS.EqualsCondition(
-                    cs.get_hyperparameter(cond[0]),
-                    cs.get_hyperparameter(cond[2]),
-                    cond[3]
-                )
-            )
-        elif cond[1] == "geq":
-            cs.add_condition(
-                CS.GreaterThanCondition(
-                    cs.get_hyperparameter(cond[0]),
-                    cs.get_hyperparameter(cond[2]),
-                    cond[3]
-                )
-            )
-        else:
-            raise Exception("unknown condition type in hpRawConditions")
+        # check if conditions for that hyperparameter were already processed
+        if cond[0] in covered_conditions:
+            continue
+        covered_conditions[cond[0]] = True
         
+        # get all conditions for that hyperparameter
+        all_conds_for_hyperparameter = []
+        for other_cond in hpRawConditions:
+            if other_cond[0] == cond[0]:
+                all_conds_for_hyperparameter.append(other_cond)
+        
+        # create the condition objects
+        condition_objects = []
+        for cond in all_conds_for_hyperparameter:
+            if cond[1] == "eq":
+                condition_objects.append(
+                    CS.EqualsCondition(
+                        cs.get_hyperparameter(cond[0]),
+                        cs.get_hyperparameter(cond[2]),
+                        cond[3]))
+            elif cond[1] == "geq":
+                condition_objects.append(
+                    CS.GreaterThanCondition(
+                        cs.get_hyperparameter(cond[0]),
+                        cs.get_hyperparameter(cond[2]),
+                        cond[3]))
+            else:
+                raise Exception("unknown condition type in hpRawConditions")
+        
+        # add the conditons to the configuration space
+        if len(condition_objects) == 1:
+            # simply add the condition
+            cs.add_condition(condition_objects[0])
+        else:
+            # resolve multiple conditions
+            if resolve_multiple == 'AND':
+                cs.add_condition(
+                    CS.AndConjunction(*condition_objects))
+            elif resolve_multiple == 'OR':
+                cs.add_condition(
+                    CS.OrConjunction(*condition_objects))
+            else:
+                raise Exception("resolve_multiple=", resolve_multiple, ". should be 'AND' or 'OR'")
+    
     return cs
 
 
@@ -80,7 +110,7 @@ def configuration_space_from_raw(hpRaw, hpRawConditions):
 #   optimizer: Adam, SGD, RMSProp
 #   learning_rate
 #   batch_size
-def create_config_space():
+def get_keras_config_space():
     hpRaw = [
         #<    name              >   <  Range       >      <Default>     <Log>   <Type>
         ["base_model",              ["InceptionV3"],    "InceptionV3",  None,   "cat"],
@@ -90,7 +120,7 @@ def create_config_space():
         ["num_dense_units_2",       [50, 4000],             1024,       False,  "int"],
         ["num_dense_units_3",       [50, 4000],             1024,       False,  "int"],
         ["activation",              ["relu", "tanh"],       "relu",     None,   "cat"],
-        ["dropout"],                [True, False],          False,      None,   "cat"],
+        ["dropout",                 [True, False],          False,      None,   "cat"],
         ["dropout_0",               [0.0, 1.0],             0.5,        False,  "float"],
         ["dropout_1",               [0.0, 1.0],             0.5,        False,  "float"],
         ["dropout_2",               [0.0, 1.0],             0.5,        False,  "float"],
@@ -115,29 +145,29 @@ def create_config_space():
         ["dropout_2",                   "geq",          "num_dense_layers",     3],
         ["dropout_3",                   "eq",           "num_dense_layers",     4],
     ]
-    return configuration_space_from_raw(hpRaw, hpRawConditions)
+    return configuration_space_from_raw(hpRaw, hpRawConditions, resolve_multiple='AND')
 
 
-def objective_function(config, epoch=127, **kwargs):
+def keras_objective(config, epochs):
     """Evaluate success of configuration config."""
-    model = keras_model.create_pretrained_model(config)
-    loss, runtime, learning_curve = keras_model.train(model, config)
+    loss, runtime, learning_curve, _ = keras_model.train(config, epochs)
     return loss, runtime, learning_curve
 
 
 class WorkerWrapper(Worker):
+    def set_objective_function(self, objective_function):
+        self.objective_function = objective_function
+        
     def compute(self, config, budget, *args, **kwargs):
-        cfg = CS.Configuration(cs, values=config)
-        loss, runtime, learning_curve = objective_function(
-            cfg.get_dictionary(), epoch=int(budget))
+        # cfg = CS.Configuration(cs, values=config)
+        loss, runtime, learning_curve = self.objective_function(
+            config, epochs=int(budget))   # config.get_dictionary()
         return {
             'loss': loss,
             'info': {"runtime": runtime,
                      "lc": learning_curve}
         }
 
-# Below the rest of my solution to ex. 6.
-# TODO: adapt to our situation.
 
 def save_plot(x, y, label, ymax=None, path="plot.png"):
     import matplotlib.pyplot as pp
@@ -160,26 +190,31 @@ def save_lcs(lcs, label, path="lcs.png"):
     pp.savefig(path)
     
 
-def main():
+def optimize(objective=keras_objective, 
+             config_space_getter=get_keras_config_space,
+             min_budget=1,
+             max_budget=127,
+             job_queue_sizes=(0, 1)):
+    
     nameserver, ns_port = hpbandster.distributed.utils.start_local_nameserver()
-
     # starting the worker in a separate thread
     w = WorkerWrapper(nameserver=nameserver, ns_port=ns_port)
+    w.set_objective_function(objective)
     w.run(background=True)
 
-    cs = create_config_space()
-    CG = hpbandster.config_generators.RandomSampling(cs)
+    cs = config_space_getter()
+    configuration_generator = hpbandster.config_generators.RandomSampling(cs)
 
     # instantiating Hyperband with some minimal configuration
     HB = hpbandster.HB_master.HpBandSter(
-        config_generator=CG,
+        config_generator=configuration_generator,
         run_id='0',
         eta=2,  # defines downsampling rate
-        min_budget=1,  # minimum number of epochs / minimum budget
-        max_budget=127,  # maximum number of epochs / maximum budget
+        min_budget=min_budget,  # minimum number of epochs / minimum budget
+        max_budget=max_budget,  # maximum number of epochs / maximum budget
         nameserver=nameserver,
         ns_port=ns_port,
-        job_queue_sizes=(0, 1),
+        job_queue_sizes=job_queue_sizes,
     )
     # runs one iteration if at least one worker is available
     res = HB.run(10, min_n_workers=1)
@@ -207,10 +242,13 @@ def main():
     # after each iteration here
     save_plot(wall_clock_time, incumbent_performance,
               label="validation of incumbent by time",
-              ymax=0.08,
+#              ymax=0.08,
               path="incumbent_performance_hb.png")
     save_lcs(lc_hyperband,
              label="evaluated learning curves with HyperBand",
              path="lcs_hyperband.png")
         
 
+if __name__ == "__main__":
+    print("optimizing keras_model.")
+    optimize(max_budget=64)
