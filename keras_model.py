@@ -15,6 +15,7 @@ from keras import optimizers
 
 import utilities as ut
 import keras_tools as tools
+import random_crop
 
 # Use pretrained model as described in https://keras.io/applications/
 
@@ -160,12 +161,15 @@ def train(config_dict,
         valid_dir,
         target_size=(299,299),
         class_mode="categorical")
+
+    random_crop_flow = random_crop.random_crop_generator(train_flow,
+                                                         save_to_dir='preprocess/')
     
     #
     # train fully connected part
     #
     hist_dense = model.fit_generator(
-        train_flow, 
+        random_crop_flow,
         steps_per_epoch=num_train_imgs//batch_size,
         verbose=2, 
         validation_data=valid_flow,
