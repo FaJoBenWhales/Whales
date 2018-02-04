@@ -149,7 +149,7 @@ def train(config_dict,
         train_dir,
         # save_to_dir="data/model_train/augmented",    
         # color_mode="grayscale",
-        target_size=(299,299),
+        target_size=(598,598),    # will be downsampled in random_crop
         batch_size=batch_size, 
         class_mode="categorical")
     
@@ -163,6 +163,7 @@ def train(config_dict,
         class_mode="categorical")
 
     random_crop_flow = random_crop.random_crop_generator(train_flow,
+                                                         target_size=(299, 299),
                                                          save_to_dir='preprocess/')
     
     #

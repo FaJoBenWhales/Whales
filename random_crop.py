@@ -25,17 +25,32 @@ def random_crop_generator(image_generator, target_size=(299, 299),
         raise NotImplementedError(
             "Preserving aspect ratio is currently not available.")
     
-    for image in image_generator:
-        size_x, size_y = image.shape[:1]
-        lose_x = np.random.randint(size_x * max_crop_x)
-        lose_y = np.random.randint(size_y * max_crop_y)
-        start_x = np.random.randint(lose_x)
-        start_y = np.random.randint(lose_y)
-        end_x = size_x - lose_x + start_x
-        end_y = size_y - lose_y + start_y
-        image = image[start_x:end_x, start_y:end_y, :]
-        if save_to_dir:
-            img = array_to_img(image)
-            fname = '{hash}.png'.format(hash=np.random.randint(1e7))
-            img.save(os.path.join(self.save_to_dir, fname))
-        yield imresize(image, size=target_size, interp=interpolation_method)
+    for batch_images, batch_labels in image_generator:
+        new_images = np.zeros_like(batch_images)
+        length = batch_images.shape[0]
+        
+        for i in range(length):
+            image = batch_images[i]
+            
+            # calculate crop indices
+            size_x, size_y = image.shape[:1]
+            lose_x = np.random.randint(size_x * max_crop_x)
+            lose_y = np.random.randint(size_y * max_crop_y)
+            start_x = np.random.randint(lose_x)
+            start_y = np.random.randint(lose_y)
+            end_x = size_x - lose_x + start_x
+            end_y = size_y - lose_y + start_y
+            
+            # apply the crop
+            image = image[start_x:end_x, start_y:end_y, :]
+            
+            if save_to_dir:
+                img = array_to_img(image)
+                fname = '{hash}.png'.format(hash=np.random.randint(1e7))
+                img.save(os.path.join(self.save_to_dir, fname))
+                
+            image = imresize(image, size=target_size,
+                             interp=interpolation_method)
+            new_images[i] = image
+
+        yield new_images, batch_labels
