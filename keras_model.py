@@ -5,8 +5,12 @@ import os
 import sys
 import numpy as np
 
-#import h5py
 from keras.applications.inception_v3 import InceptionV3, preprocess_input
+from keras.applications.xception import Xception
+from keras.applications.resnet50 import ResNet50
+from keras.applications.mobilenet import MobileNet
+from keras.applications.inception_resnet_v2 import InceptionResNetV2
+
 from keras.preprocessing import image
 from keras.models import Model
 from keras.layers import Dense, GlobalAveragePooling2D, Dropout
@@ -16,9 +20,20 @@ import keras_tools as tools
 
 # Use pretrained model as described in https://keras.io/applications/
 
-def create_pretrained_model(two_layers=True, num_classes=10):
-    # load pre-trained model
-    base_model = InceptionV3(weights='imagenet', include_top=False)
+def create_pretrained_model(two_layers=True, num_classes=10, base_mod='InceptionV3'):
+
+    if base_mod == 'InceptionV3':
+        base_model = InceptionV3(weights='imagenet', include_top=False)  
+    elif base_mod == 'Xception':
+        base_model = Xception(weights='imagenet', include_top=False)
+    elif base_mod == 'ResNet50':
+        base_model = ResNet50(weights='imagenet', include_top=False)
+    elif base_mod == 'MobileNet':
+        base_model = MobileNet(weights='imagenet', input_shape=(224, 224,3), include_top=False)
+    elif base_mod == 'InceptionResNetV2':
+        base_model = InceptionResNetV2(weights='imagenet', include_top=False)
+    else:
+        print("invalid model: ", base_mod)
     
     x = base_model.output
     x = GlobalAveragePooling2D()(x)
@@ -44,17 +59,30 @@ def create_pretrained_model(two_layers=True, num_classes=10):
     model.compile(optimizer='rmsprop',
                   loss='categorical_crossentropy',
                   metrics=['accuracy'])
+    
+    model.name = base_mod    # to identify model in "unfreeze_layers() and "train()" function
+    print("successfuly created model: ", model.name)    
+    
     return model
 
 
 def unfreeze_cnn_layers(model):
     # we chose to train the top 2 inception blocks, i.e. we will freeze
-    # the first 249 layers and unfreeze the rest:
-    for layer in model.layers[:249]:
-       layer.trainable = False
-    for layer in model.layers[249:]:
-       layer.trainable = True
+    # the first 2 layer blocks and unfreeze the rest:
+    if model.name == 'InceptionV3':
+        cut_off = 249
+    elif model.name == 'Xception':
+        cut_off = 116
+    elif model.name == 'ResNet50':
+        cut_off = 152      
+    else:
+        print("invalid model: ", model.name)
 
+    for layer in model.layers[:cut_off]:
+       layer.trainable = False
+    for layer in model.layers[cut_off:]:
+       layer.trainable = True        
+        
     # we need to recompile the model for these modifications to take effect
     # we use SGD with a low learning rate
     from keras.optimizers import SGD
@@ -67,6 +95,14 @@ def unfreeze_cnn_layers(model):
 
 def train(model, num_classes, epochs=20, cnn_epochs = 0, save_path=None, batch_size=16,  
           train_dir="data/model_train", valid_dir="data/model_valid", train_valid_split=0.7):
+
+    if model.name == 'InceptionV3' or model.name == 'Xception' or model.name == 'InceptionResNetV2':
+        target_size = (299,299)
+    elif model.name == 'ResNet50' or model.name == 'MobileNet':
+        target_size = (224,224)
+    else:
+        print("invalid model: ", model.name)
+    print("training model", model.name)    
     
     # create new environment with new random train / valid split
     num_train_imgs, num_valid_imgs = ut.create_small_case(
@@ -92,7 +128,7 @@ def train(model, num_classes, epochs=20, cnn_epochs = 0, save_path=None, batch_s
         train_dir,
         # save_to_dir="data/model_train/augmented",    
         # color_mode="grayscale",
-        target_size=(299,299),
+        target_size=target_size,
         batch_size=batch_size, 
         class_mode="categorical")
 
@@ -102,7 +138,7 @@ def train(model, num_classes, epochs=20, cnn_epochs = 0, save_path=None, batch_s
 
     valid_flow = valid_gen.flow_from_directory(
         valid_dir,
-        target_size=(299,299),
+        target_size=target_size,
         class_mode="categorical") 
     
     hist = model.fit_generator(
