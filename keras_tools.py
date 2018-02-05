@@ -10,12 +10,10 @@ import keras.utils
 import utilities as ut
 
 
-def get_run_name(additional=""):
-    if additional != "":
-        additional = "_" + additional
-    return "run-{}{}".format(
-        datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S"),
-        additional)
+def get_run_name(prefix="run", additional=""):
+    return "_".join([prefix, 
+                     datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S"),
+                     additional])
 
 
 def save_learning_curves(history, run_name, base_path="plots/"):

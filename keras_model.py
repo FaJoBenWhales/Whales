@@ -44,7 +44,8 @@ def _create_pretrained_model(config_dict, num_classes):
     #
     # load pre-trained model
     #
-    
+
+
     if base_model == 'InceptionV3':
         pretrained_model = InceptionV3(weights='imagenet', include_top=False)  
     elif base_model == 'Xception':
@@ -102,7 +103,7 @@ def _create_pretrained_model(config_dict, num_classes):
 # TODO: add mow_many parameter: float between 0 and 1 that gives
 # percentage of unfrozen layers from top
 # TODO rename caller parameter
-def unfreeze_cnn_layers(model, unfreeze_percentage):
+def _unfreeze_cnn_layers(model, unfreeze_percentage):
     # we chose to train the top 2 inception blocks, i.e. we will freeze
     # the first 2 layer blocks and unfreeze the rest:
     if model.name == 'InceptionV3':
@@ -134,6 +135,7 @@ def train(config_dict,
           model=None,
           num_classes=10,
           save_model_path=None,
+          save_data_path="plots",
           train_dir="data/model_train",
           valid_dir="data/model_valid",
           train_valid_split=0.7):
@@ -205,7 +207,7 @@ def train(config_dict,
     #
     # train fully connected part
     #
-    hist = model.fit_generator(
+    hist_dense = model.fit_generator(
         train_flow, 
         steps_per_epoch=num_train_imgs//batch_size,
         verbose=2, 
@@ -240,6 +242,14 @@ def train(config_dict,
     if save_model_path is not None:
         model.save(save_model_path)
 
+    if save_data_path is not None:
+        run_name = tools.get_run_name()
+        tools.save_learning_curves(histories, run_name, base_path=save_data_path)
+        csv_path = os.path.join(save_data_path, run_name, run_name + ".csv")
+        ut.write_csv_dict(histories,
+                          keys=['loss', 'acc', 'val_loss', 'val_acc'],
+                          filename=csv_path)
+
     # TODO return validation accuracy instead of loss (averaged over last epochs)
     
     best_val_loss = None
@@ -251,8 +261,7 @@ def train(config_dict,
     loss = np.mean(np.array([best_val_loss, val_loss_end]))
     
     runtime = time.time() - start_time
-#   return ((loss, runtime, learningcurve), all_histories)
-    return ((loss, runtime, histories['val_loss']), histories)
+    return (loss, runtime, histories)
 
 
 def main():
@@ -273,7 +282,7 @@ def main():
                    'cnn_unlock_epoch': 8,
                    'cnn_num_unlock': 63,  # cost surprisingly little runtime
                    'batch_size': 16}
-    _, histories = train(config_dict, epochs=16, num_classes=num_classes)
+    _, _, histories = train(config_dict, epochs=16, num_classes=num_classes)
     print("HISTORIES:")
     print(histories)
     run_name = tools.get_run_name()
