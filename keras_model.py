@@ -59,6 +59,10 @@ def _create_pretrained_model(config_dict, num_classes):
         print("invalid model: ", base_model)
     
     x = pretrained_model.output
+
+    for i, layer in enumerate(pretrained_model.layers):
+       print(i, layer.name)    
+    
     
     #
     # add fully connected layers
@@ -99,15 +103,24 @@ def _create_pretrained_model(config_dict, num_classes):
     return model
 
 
-# TODO: add mow_many parameter: float between 0 and 1 that gives
-# percentage of unfrozen layers from top
-# TODO rename caller parameter
+# "unfreeze_percentage" is fraction of whole CNN model to be unfrozen
+# range 0.0 up to 0.3 - Values above 0.3 are interpreted as 0.3
 def unfreeze_cnn_layers(model, unfreeze_percentage):
-    # we chose to train the top 2 inception blocks, i.e. we will freeze
+    # we chose to train the top X layers, where X is one of the nodes of the CNN
     # the first 2 layer blocks and unfreeze the rest:
+
+    unfreeze_percentage = min(unfreeze_percentage, 0.3)  
+    cut_off = -1
     if model.name == 'InceptionV3':
-        cut_off = 249
+        top_nodes = [280, 249, 229, 197]   # nodes of top layer-blocks: possible cut_off points
+        unfreeze_blocks = int(11*unfreeze_percentage)  # 
+        if unfreeze_blocks > 0:
+            cut_off = top_nodes[unfreeze_blocks-1]
     elif model.name == 'Xception':
+        top_nodes = [126, 116, 106, 96, 96]   
+        unfreeze_blocks = int(11*unfreeze_percentage)  # 
+        cut_off = top_nodes[unfreeze_blocks]
+        
         cut_off = 116
     elif model.name == 'ResNet50':
         cut_off = 152      
