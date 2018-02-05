@@ -44,8 +44,6 @@ def _create_pretrained_model(config_dict, num_classes):
     #
     # load pre-trained model
     #
-
-
     if base_model == 'InceptionV3':
         pretrained_model = InceptionV3(weights='imagenet', include_top=False)  
     elif base_model == 'Xception':
@@ -145,16 +143,22 @@ def train(config_dict,
     # extract relevant parts of configuration
     #
     cnn_unlock_epoch = config_dict["cnn_unlock_epoch"]
-    cnn_num_unlock = config_dict["cnn_num_unlock"]
+    unfreeze_percentage = config_dict["unfreeze_percentage"]
     batch_size = config_dict['batch_size']
+    
     #
     # get model to train, determine training times
     #
     if model is None:
         model = _create_pretrained_model(config_dict, num_classes)
-    training_epochs_dense = cnn_unlock_epoch
-    training_epochs_wholemodel = epochs - training_epochs_dense
-
+    
+    if epochs <= cnn_unlock_epoch:
+        training_epochs_dense = epochs
+        training_epochs_wholemodel = 0
+    else:
+        training_epochs_dense = cnn_unlock_epoch
+        training_epochs_wholemodel = epochs - cnn_unlock_epoch
+    
     if model.name == 'InceptionV3' or model.name == 'Xception' or model.name == 'InceptionResNetV2':
         target_size = (299, 299)
     elif model.name == 'ResNet50' or model.name == 'MobileNet':
@@ -218,12 +222,8 @@ def train(config_dict,
     #
     # train the whole model with parts of the cnn unlocked (fixed optimizer!)
     #
-
-    # TODO fix calculation of training epochs whole model / dense
-    # TODO percentage instead of how_many
-
     if training_epochs_wholemodel > 0:
-        model = _unfreeze_cnn_layers(model, how_many=cnn_num_unlock)
+        model = _unfreeze_cnn_layers(model, unfreeze_percentage=unfreeze_percentage)
         hist_wholemodel = model.fit_generator(
             train_flow, 
             steps_per_epoch = num_train_imgs//batch_size,
@@ -250,16 +250,8 @@ def train(config_dict,
                           keys=['loss', 'acc', 'val_loss', 'val_acc'],
                           filename=csv_path)
 
-    # TODO return validation accuracy instead of loss (averaged over last epochs)
     
-    best_val_loss = None
-    for value in histories['val_loss']:
-        if best_val_loss is None or best_val_loss >= value:
-            best_val_loss = value
-    if len(histories['val_loss']) > 3:
-        val_loss_end = np.mean(np.array(histories['val_loss'])[-3:-1])
-    loss = np.mean(np.array([best_val_loss, val_loss_end]))
-    
+    hpbandster_loss = 1.0 - histories['val_acc'])[-1])
     runtime = time.time() - start_time
     return (loss, runtime, histories)
 
@@ -280,7 +272,7 @@ def main():
                    'optimizer': "SGD",
                    'learning_rate': 0.001,
                    'cnn_unlock_epoch': 8,
-                   'cnn_num_unlock': 63,  # cost surprisingly little runtime
+                   'unfreeze_percentage': 0.9,
                    'batch_size': 16}
     _, _, histories = train(config_dict, epochs=16, num_classes=num_classes)
     print("HISTORIES:")

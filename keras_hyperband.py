@@ -119,10 +119,10 @@ def get_keras_config_space():
         #<    name              >   <  Range       >      <Default>     <Log>   <Type>
         ["base_model",              ["InceptionV3"],    "InceptionV3",  None,   "cat"],
         ["num_dense_layers",        [1, 4],                 2,          False,  "int"],
-        ["num_dense_units_0",       [50, 500],              300,       False,  "int"],
-        ["num_dense_units_1",       [50, 500],              200,       False,  "int"],
-        ["num_dense_units_2",       [50, 500],              100,       False,  "int"],
-        ["num_dense_units_3",       [50, 500],              50,       False,  "int"],
+        ["num_dense_units_0",       [50, 500],              300,        True,   "int"],
+        ["num_dense_units_1",       [50, 500],              200,        True,   "int"],
+        ["num_dense_units_2",       [50, 500],              100,        True,   "int"],
+        ["num_dense_units_3",       [50, 500],              50,         True,   "int"],
         ["activation",              ["relu", "tanh"],       "relu",     None,   "cat"],
         ["dropout",                 [True, False],          False,      None,   "cat"],
         ["dropout_0",               [0.0, 1.0],             0.5,        False,  "float"],
@@ -132,8 +132,8 @@ def get_keras_config_space():
         ["optimizer",               ["Adam", "SGD", 
                                      "RMSProp"],            "SGD",      None,   "cat"],
         ["learning_rate",           [0.00001, 0.1],         0.001,      True,   "float"],
-        ["cnn_unlock_epoch",        [0, 5],              5,        False,  "int"],
-        ["cnn_num_unlock",          [0, 63],                 0,         False,  "int"],
+        ["cnn_unlock_epoch",        [0, 1000],              200,        False,  "int"],
+        ["unfreeze_percentage",     [0.7, 1.0],             0.9,        False,  "int"],
         ["batch_size",              [16, 64],               32,         True,   "int"],
     ]
     hpRawConditions = [
@@ -154,8 +154,6 @@ def get_keras_config_space():
 
 def keras_objective(config, epochs, base_path, *args, **kwargs):
     """Evaluate success of configuration config."""
-    # create directory for all plots related to this run of hyperband
-
     loss, runtime, histories = keras_model.train(config, epochs, save_data_path=base_path)
     return loss, runtime, histories
 
