@@ -8,8 +8,10 @@ logging.basicConfig(level=logging.DEBUG)
 import ConfigSpace as CS
 import hpbandster.distributed.utils
 from hpbandster.distributed.worker import Worker
+import os
 
 import keras_model
+import keras_tools as tools
 
 
 
@@ -117,10 +119,10 @@ def get_keras_config_space():
         #<    name              >   <  Range       >      <Default>     <Log>   <Type>
         ["base_model",              ["InceptionV3"],    "InceptionV3",  None,   "cat"],
         ["num_dense_layers",        [1, 4],                 2,          False,  "int"],
-        ["num_dense_units_0",       [50, 500],              300,       False,  "int"],
-        ["num_dense_units_1",       [50, 500],              200,       False,  "int"],
-        ["num_dense_units_2",       [50, 500],              100,       False,  "int"],
-        ["num_dense_units_3",       [50, 500],              50,       False,  "int"],
+        ["num_dense_units_0",       [50, 500],              300,        True,   "int"],
+        ["num_dense_units_1",       [50, 500],              200,        True,   "int"],
+        ["num_dense_units_2",       [50, 500],              100,        True,   "int"],
+        ["num_dense_units_3",       [50, 500],              50,         True,   "int"],
         ["activation",              ["relu", "tanh"],       "relu",     None,   "cat"],
         ["dropout",                 [True, False],          False,      None,   "cat"],
         ["dropout_0",               [0.0, 1.0],             0.5,        False,  "float"],
@@ -131,7 +133,7 @@ def get_keras_config_space():
                                      "RMSProp"],            "SGD",      None,   "cat"],
         ["learning_rate",           [0.00001, 0.1],         0.001,      True,   "float"],
         ["cnn_unlock_epoch",        [0, 1000],              200,        False,  "int"],
-        ["cnn_num_unlock",          [0, 63],                 0,         False,  "int"],
+        ["unfreeze_percentage",     [0.7, 1.0],             0.9,        False,  "int"],
         ["batch_size",              [16, 64],               32,         True,   "int"],
     ]
     hpRawConditions = [
@@ -150,24 +152,29 @@ def get_keras_config_space():
     return configuration_space_from_raw(hpRaw, hpRawConditions, resolve_multiple='AND')
 
 
-def keras_objective(config, epochs):
+def keras_objective(config, epochs, base_path, *args, **kwargs):
     """Evaluate success of configuration config."""
-    loss, runtime, learning_curve, _ = keras_model.train(config, epochs)
-    return loss, runtime, learning_curve
+    loss, runtime, histories = keras_model.train(config, epochs, save_data_path=base_path)
+    return loss, runtime, histories
 
 
 class WorkerWrapper(Worker):
-    def set_objective_function(self, objective_function):
+    def __init__(self, save_data_path, objective_function, *args, **kwargs):
+        self.save_data_path = save_data_path
         self.objective_function = objective_function
-        
+        super().__init__(*args, **kwargs)
+    
     def compute(self, config, budget, *args, **kwargs):
         # cfg = CS.Configuration(cs, values=config)
-        loss, runtime, learning_curve = self.objective_function(
-            config, epochs=int(budget))   # config.get_dictionary()
+        loss, runtime, histories = self.objective_function(
+            config,
+            epochs=int(budget),
+            base_path=self.save_data_path,
+            *args, **kwargs)
         return {
             'loss': loss,
             'info': {"runtime": runtime,
-                     "lc": learning_curve}
+                     "histories": histories}
         }
 
 
@@ -196,12 +203,21 @@ def optimize(objective=keras_objective,
              config_space_getter=get_keras_config_space,
              min_budget=1,
              max_budget=127,
-             job_queue_sizes=(0, 1)):
+             job_queue_sizes=(0, 1),
+             base_path="plots",
+             run_name=""):
+
+    run_name = tools.get_run_name(prefix="hyperband", additional=run_name)
+    path = os.path.join(base_path, run_name)
+    if not os.path.isdir(path):
+        os.makedirs(path)
     
     nameserver, ns_port = hpbandster.distributed.utils.start_local_nameserver()
     # starting the worker in a separate thread
-    w = WorkerWrapper(nameserver=nameserver, ns_port=ns_port)
-    w.set_objective_function(objective)
+    w = WorkerWrapper(save_data_path=path,
+                      objective_function=objective,
+                      nameserver=nameserver,
+                      ns_port=ns_port)
     w.run(background=True)
 
     cs = config_space_getter()
@@ -224,33 +240,36 @@ def optimize(objective=keras_objective,
     # shutdown the worker and the dispatcher
     HB.shutdown(shutdown_workers=True)
 
-    # extract incumbent trajectory and all evaluated learning curves
-    traj = res.get_incumbent_trajectory()
-    wall_clock_time = []
-    cum_time = 0
+    # TODO pickle res
+    # TODO save incumbent trajectory as csv
 
-    for c in traj["config_ids"]:
-        cum_time += res.get_runs_by_id(c)[-1]["info"]["runtime"]
-        wall_clock_time.append(cum_time)
+#     # extract incumbent trajectory and all evaluated learning curves
+#     traj = res.get_incumbent_trajectory()
+#     wall_clock_time = []
+#     cum_time = 0
 
-    lc_hyperband = []
-    for r in res.get_all_runs():
-        c = r["config_id"]
-        lc_hyperband.append(res.get_runs_by_id(c)[-1]["info"]["lc"])
+#     for c in traj["config_ids"]:
+#         cum_time += res.get_runs_by_id(c)[-1]["info"]["runtime"]
+#         wall_clock_time.append(cum_time)
 
-    incumbent_performance = traj["losses"]
+#     lc_hyperband = []
+#     for r in res.get_all_runs():
+#         c = r["config_id"]
+#         lc_hyperband.append(res.get_runs_by_id(c)[-1]["info"]["lc"])
 
-    # save and plot the wall clock time and the validation of the incumbent
-    # after each iteration here
-    save_plot(wall_clock_time, incumbent_performance,
-              label="validation of incumbent by time",
-#              ymax=0.08,
-              path="incumbent_performance_hb.png")
-    save_lcs(lc_hyperband,
-             label="evaluated learning curves with HyperBand",
-             path="lcs_hyperband.png")
+#     incumbent_performance = traj["losses"]
+
+#     # save and plot the wall clock time and the validation of the incumbent
+#     # after each iteration here
+#     save_plot(wall_clock_time, incumbent_performance,
+#               label="validation of incumbent by time",
+# #              ymax=0.08,
+#               path="incumbent_performance_hb.png")
+#     save_lcs(lc_hyperband,
+#              label="evaluated learning curves with HyperBand",
+#              path="lcs_hyperband.png")
         
 
 if __name__ == "__main__":
     print("optimizing keras_model.")
-    optimize(max_budget=64)
+    optimize(max_budget=5)
