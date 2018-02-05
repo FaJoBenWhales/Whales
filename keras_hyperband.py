@@ -3,6 +3,8 @@
 
 # Hyperparameter optimization on the pretrained Keras model using hyperband.
 
+import logging
+logging.basicConfig(level=logging.DEBUG)
 import ConfigSpace as CS
 import hpbandster.distributed.utils
 from hpbandster.distributed.worker import Worker
