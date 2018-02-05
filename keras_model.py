@@ -8,6 +8,11 @@ import time
 
 #import h5py
 from keras.applications.inception_v3 import InceptionV3, preprocess_input
+from keras.applications.xception import Xception
+from keras.applications.resnet50 import ResNet50
+from keras.applications.mobilenet import MobileNet
+from keras.applications.inception_resnet_v2 import InceptionResNetV2
+
 from keras.preprocessing import image
 from keras.models import Model
 from keras.layers import Dense, GlobalAveragePooling2D, Dropout
@@ -35,18 +40,31 @@ def _create_pretrained_model(config_dict, num_classes):
             dropout_list.append(config_dict['dropout_' + str(i)])
     optimizer = config_dict['optimizer']
     learning_rate = config_dict['learning_rate']
-    
+
     #
     # load pre-trained model
     #
+    
     if base_model == 'InceptionV3':
-        pretrained_model = InceptionV3(weights='imagenet', include_top=False)
+        pretrained_model = InceptionV3(weights='imagenet', include_top=False)  
+    elif base_model == 'Xception':
+        pretrained_model = Xception(weights='imagenet', include_top=False)
+    elif base_model == 'ResNet50':
+        pretrained_model = ResNet50(weights='imagenet', include_top=False)
+    elif base_model == 'MobileNet':
+        pretrained_model = MobileNet(weights='imagenet', input_shape=(224, 224,3), include_top=False)
+    elif base_model == 'InceptionResNetV2':
+        pretrained_model = InceptionResNetV2(weights='imagenet', include_top=False)
     else:
-        raise NotImplementedError("Unknown base model: {}".format(base_model))
+        print("invalid model: ", base_model)
+    
+    x = pretrained_model.output
+    
     #
     # add fully connected layers
     #
     x = pretrained_model.output
+
     x = GlobalAveragePooling2D()(x)
     for i in range(num_dense_layers):
         x = Dense(num_dense_units_list[i], activation=activation)(x)
@@ -74,25 +92,40 @@ def _create_pretrained_model(config_dict, num_classes):
     model.compile(optimizer=opt,
                   loss='categorical_crossentropy',
                   metrics=['accuracy'])
+    
+    model.name = base_model    # to identify model in "unfreeze_layers() and "train()" function
+    # print("successfuly created model: ", model.name)    
+    
     return model
 
 
-def _unfreeze_cnn_layers(model, how_many=2):
-    # for InceptionV3 len(model.layers)==311
-    # (last two inceptionV3 blocks are less or equal 63 layers)
-    thresh = 311 - how_many
-    for layer in model.layers[:thresh]:
-       layer.trainable = False
-    for layer in model.layers[thresh:]:
-       layer.trainable = True
+# TODO: add mow_many parameter: float between 0 and 1 that gives
+# percentage of unfrozen layers from top
+# TODO rename caller parameter
+def unfreeze_cnn_layers(model, unfreeze_percentage):
+    # we chose to train the top 2 inception blocks, i.e. we will freeze
+    # the first 2 layer blocks and unfreeze the rest:
+    if model.name == 'InceptionV3':
+        cut_off = 249
+    elif model.name == 'Xception':
+        cut_off = 116
+    elif model.name == 'ResNet50':
+        cut_off = 152      
+    else:
+        print("invalid model: ", model.name)
 
+    for layer in model.layers[:cut_off]:
+       layer.trainable = False
+    for layer in model.layers[cut_off:]:
+       layer.trainable = True        
+        
     # we need to recompile the model for these modifications to take effect
     # we use SGD with a low learning rate
     from keras.optimizers import SGD
     model.compile(optimizer=SGD(lr=0.0001, momentum=0.9), loss='categorical_crossentropy', metrics=['accuracy'])
     # model.compile(optimizer=SGD(lr=0.0001, momentum=0.9), loss='categorical_crossentropy')
     
-    print("\n ****** unfrozen some top CNN layers ******")
+    print("\n ****** unfrozen 2 top CNN layers ******")
     return model
 
 
@@ -104,7 +137,7 @@ def train(config_dict,
           train_dir="data/model_train",
           valid_dir="data/model_valid",
           train_valid_split=0.7):
-    
+
     start_time = time.time()
     #
     # extract relevant parts of configuration
@@ -119,7 +152,15 @@ def train(config_dict,
         model = _create_pretrained_model(config_dict, num_classes)
     training_epochs_dense = cnn_unlock_epoch
     training_epochs_wholemodel = epochs - training_epochs_dense
-    
+
+    if model.name == 'InceptionV3' or model.name == 'Xception' or model.name == 'InceptionResNetV2':
+        target_size = (299, 299)
+    elif model.name == 'ResNet50' or model.name == 'MobileNet':
+        target_size = (224, 224)
+    else:
+        print("invalid model: ", model.name)
+    print("training model", model.name)    
+
     #
     # prepare training data
     #
@@ -148,7 +189,7 @@ def train(config_dict,
         train_dir,
         # save_to_dir="data/model_train/augmented",    
         # color_mode="grayscale",
-        target_size=(299,299),
+        target_size=target_size,
         batch_size=batch_size, 
         class_mode="categorical")
     
@@ -158,13 +199,13 @@ def train(config_dict,
     
     valid_flow = valid_gen.flow_from_directory(
         valid_dir,
-        target_size=(299,299),
-        class_mode="categorical")
-    
+        target_size=target_size,
+        class_mode="categorical") 
+
     #
     # train fully connected part
     #
-    hist_dense = model.fit_generator(
+    hist = model.fit_generator(
         train_flow, 
         steps_per_epoch=num_train_imgs//batch_size,
         verbose=2, 
@@ -175,6 +216,10 @@ def train(config_dict,
     #
     # train the whole model with parts of the cnn unlocked (fixed optimizer!)
     #
+
+    # TODO fix calculation of training epochs whole model / dense
+    # TODO percentage instead of how_many
+
     if training_epochs_wholemodel > 0:
         model = _unfreeze_cnn_layers(model, how_many=cnn_num_unlock)
         hist_wholemodel = model.fit_generator(
@@ -194,6 +239,8 @@ def train(config_dict,
     #
     if save_model_path is not None:
         model.save(save_model_path)
+
+    # TODO return validation accuracy instead of loss (averaged over last epochs)
     
     best_val_loss = None
     for value in histories['val_loss']:
