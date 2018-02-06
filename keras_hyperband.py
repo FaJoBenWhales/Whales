@@ -132,8 +132,8 @@ def get_keras_config_space():
         ["optimizer",               ["Adam", "SGD", 
                                      "RMSProp"],            "SGD",      None,   "cat"],
         ["learning_rate",           [0.00001, 0.1],         0.001,      True,   "float"],
-        ["cnn_unlock_epoch",        [0, 1000],              200,        False,  "int"],
-        ["unfreeze_percentage",     [0.7, 1.0],             0.9,        False,  "int"],
+        ["cnn_unlock_epoch",        [1000, 1500],           1500,       False,  "int"],
+        ["unfreeze_percentage",     [0.0, 0.3],             0.1,        False,  "float"],
         ["batch_size",              [16, 64],               32,         True,   "int"],
     ]
     hpRawConditions = [

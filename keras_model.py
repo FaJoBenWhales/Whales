@@ -59,8 +59,8 @@ def _create_pretrained_model(config_dict, num_classes):
     
     x = pretrained_model.output
 
-    for i, layer in enumerate(pretrained_model.layers):
-       print(i, layer.name)    
+    # for i, layer in enumerate(pretrained_model.layers):
+    # print(i, layer.name)    
     
     
     #
@@ -265,7 +265,7 @@ def train(config_dict,
                           filename=csv_path)
 
     
-    hpbandster_loss = 1.0 - histories['val_acc'])[-1])
+    hpbandster_loss = 1.0 - histories['val_acc'][-1]
     runtime = time.time() - start_time
     return (loss, runtime, histories)
 
