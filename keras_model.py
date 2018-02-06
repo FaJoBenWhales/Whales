@@ -235,7 +235,6 @@ def train(config_dict,
     #
     # train the whole model with parts of the cnn unlocked (fixed optimizer!)
     #
- #  TODO change 0.7 1.0 to 0.0 0.3
     if training_epochs_wholemodel > 0:
         model = _unfreeze_cnn_layers(model, unfreeze_percentage=unfreeze_percentage)
         hist_wholemodel = model.fit_generator(
@@ -286,7 +285,7 @@ def main():
                    'optimizer': "SGD",
                    'learning_rate': 0.001,
                    'cnn_unlock_epoch': 8,
-                   'unfreeze_percentage': 0.9,
+                   'unfreeze_percentage': 0.1,
                    'batch_size': 16}
     _, _, histories = train(config_dict, epochs=16, num_classes=num_classes)
     print("HISTORIES:")
