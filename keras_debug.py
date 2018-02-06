@@ -1,5 +1,9 @@
 import sys
 from keras.applications.inception_v3 import InceptionV3
+# from keras.applications.xception import Xception
+# from keras.applications.resnet50 import ResNet50
+# from keras.applications.mobilenet import MobileNet
+# from keras.applications.inception_resnet_v2 import InceptionResNetV2
 import ConfigSpace as CS
 import hpbandster.distributed.utils
 from hpbandster.distributed.worker import Worker
@@ -71,7 +75,11 @@ def test_hpbandster(min_budget=1, max_budget=5, job_queue_sizes=(0, 1)):
     
 
 def load_model():
-    pretrained_model = InceptionV3(weights='imagenet', include_top=False)
+    # pretrained_model = InceptionV3(weights='imagenet', include_top=False)
+    # pretrained_model = Xception(weights='imagenet', include_top=False)
+    # pretrained_model = ResNet50(weights='imagenet', include_top=False)
+    # pretrained_model = MobileNet(weights='imagenet', input_shape=(224, 224,3), include_top=False)
+    # pretrained_model = InceptionResNetV2(weights='imagenet', include_top=False)
     return pretrained_model
 
 
