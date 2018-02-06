@@ -283,7 +283,8 @@ def train(config_dict,
     hpbandster_loss = 1.0 - histories['val_acc'][-1]
     runtime = time.time() - start_time
     return (hpbandster_loss, runtime, histories)
-
+ 
+# gagaga test
 
 def main():
     print("****** Run short training with InceptionV3 and save results. ******")
