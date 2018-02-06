@@ -367,6 +367,31 @@ def save_plot(x, ys, xlabel, ylabel, path, title=""):
     plt.savefig(path)
 
 
+def save_bar_plot(results, base_models):
+    
+    fig, ax = plt.subplots()
+
+    ind = np.arange(len(results))    # the x locations for the groups
+    width = 0.35         # the width of the bars
+    # p1 = ax.bar(ind, menMeans, width, color='r', bottom=0, yerr=menStd)
+    avg_accs = ax.bar(ind, results[:][0], width, color='b', bottom=0)
+    
+    # womenMeans = (145, 149, 172, 165, 200)
+    # womenStd = (30, 25, 20, 31, 22)
+    # p2 = ax.bar(ind + width, womenMeans, width, color='y', bottom=0, yerr=womenStd)
+    MAPs = ax.bar(ind + width, results[:][1], width, color='g', bottom=0)
+
+    ax.set_title('Mean accuaries and MAP of models')
+    ax.set_xticks(ind + width / 2)
+    ax.set_xticklabels(base_models)
+
+    ax.legend((p1[0], p2[0]), ('Acc', 'MAP'))
+    # ax.yaxis.set_units(inch)
+    ax.autoscale_view()
+
+plt.show()         
+    
+
 def print_number_of_Whales():
     csv_list = read_csv()
     w = get_whales(csv_list)

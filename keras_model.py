@@ -283,9 +283,50 @@ def train(config_dict,
     hpbandster_loss = 1.0 - histories['val_acc'][-1]
     runtime = time.time() - start_time
     return (hpbandster_loss, runtime, histories)
- 
-# gagaga test
 
+
+def eval_base_models(num_classes = 10):
+    
+    def eval_base_model(base_model, num_classes):
+
+        config_dict = {'base_model': base_model, 
+                       'num_dense_layers': 3,
+                       'num_dense_units_0': 1024,
+                       'num_dense_units_1': 1024,
+                       'num_dense_units_2': 1024,
+                       'activation': 'relu',
+                       'dropout': False,
+                       'dropout_0': 1.0,
+                       'dropout_1': 1.0,
+                       'dropout_2': 1.0,
+                       'optimizer': "RMSProp",
+                       'learning_rate': 0.0001,
+                       'cnn_learning_rate': 0.0001,               
+                       'cnn_unlock_epoch': 2,
+                       'unfreeze_percentage': 0.2,
+                       'batch_size': 16}        
+        
+        model = _create_pretrained_model(config_dict, num_classes)
+        _, _, history = train(config_dict, epochs=4, model=model,num_classes=num_classes)
+        accs = history['val_acc']
+        print("accs", accs)
+        avg_acc = np.mean(history['val_acc'][-5:])
+        MAP, _ = tools.print_model_test_info(model, num_classes)
+        return (avg_acc, MAP)
+
+    # base_models = ['InceptionV3', 'MobileNet', 'ResNet50']
+    base_models = ['InceptionV3', 'MobileNet']
+    results = []
+    for base_model in base_models:
+        results.append = eval_base_model(base_model, num_classes)
+
+    print("results", results)
+    
+    # ut.save_bar_plot(results, base_models)
+        
+    return results
+    
+    
 def main():
     print("****** Run short training with InceptionV3 and save results. ******")
     num_classes = 10
