@@ -267,7 +267,7 @@ def train(config_dict,
     
     hpbandster_loss = 1.0 - histories['val_acc'][-1]
     runtime = time.time() - start_time
-    return (loss, runtime, histories)
+    return (hpbandster_loss, runtime, histories)
 
 
 def main():
