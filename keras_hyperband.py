@@ -9,7 +9,7 @@ import ConfigSpace as CS
 import hpbandster.distributed.utils
 from hpbandster.distributed.worker import Worker
 import os
-
+import keras
 import keras_model
 import keras_tools as tools
 
@@ -171,6 +171,7 @@ class WorkerWrapper(Worker):
             epochs=int(budget),
             base_path=self.save_data_path,
             *args, **kwargs)
+        keras.backend.clear_session()  # avoids problems with multithreading
         return {
             'loss': loss,
             'info': {"runtime": runtime,

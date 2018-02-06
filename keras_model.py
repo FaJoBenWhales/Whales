@@ -257,11 +257,12 @@ def train(config_dict,
 
     if save_data_path is not None:
         run_name = tools.get_run_name()
-        tools.save_learning_curves(histories, run_name, base_path=save_data_path)
-        csv_path = os.path.join(save_data_path, run_name, run_name + ".csv")
-        ut.write_csv_dict(histories,
-                          keys=['loss', 'acc', 'val_loss', 'val_acc'],
-                          filename=csv_path)
+        # TODO find bugs and reactivate following lines
+        #tools.save_learning_curves(histories, run_name, base_path=save_data_path)
+        #csv_path = os.path.join(save_data_path, run_name, run_name + ".csv")
+        #ut.write_csv_dict(histories,
+        #                  keys=['loss', 'acc', 'val_loss', 'val_acc'],
+        #                  filename=csv_path)
 
     
     hpbandster_loss = 1.0 - histories['val_acc'][-1]

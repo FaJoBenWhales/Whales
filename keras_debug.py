@@ -75,7 +75,7 @@ def test_hpbandster(min_budget=1, max_budget=5, job_queue_sizes=(0, 1)):
     
 
 def load_model():
-    # pretrained_model = InceptionV3(weights='imagenet', include_top=False)
+    pretrained_model = InceptionV3(weights='imagenet', include_top=False)
     # pretrained_model = Xception(weights='imagenet', include_top=False)
     # pretrained_model = ResNet50(weights='imagenet', include_top=False)
     # pretrained_model = MobileNet(weights='imagenet', input_shape=(224, 224,3), include_top=False)
