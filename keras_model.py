@@ -59,8 +59,8 @@ def _create_pretrained_model(config_dict, num_classes):
     
     x = pretrained_model.output
 
-    for i, layer in enumerate(pretrained_model.layers):
-       print(i, layer.name)    
+    # for i, layer in enumerate(pretrained_model.layers):
+    #    print(i, layer.name)    
     
     
     #
@@ -104,40 +104,55 @@ def _create_pretrained_model(config_dict, num_classes):
 
 # "unfreeze_percentage" is fraction of whole CNN model to be unfrozen
 # range 0.0 up to 0.3 - Values above 0.3 are interpreted as 0.3
-def _unfreeze_cnn_layers(model, unfreeze_percentage):
+def _unfreeze_cnn_layers(model, config_dict):
     # we chose to train the top X layers, where X is one of the nodes of the CNN
     # the first 2 layer blocks and unfreeze the rest:
-
+    
+    unfreeze_percentage = config_dict["unfreeze_percentage"]
     unfreeze_percentage = min(unfreeze_percentage, 0.3)  
-    cut_off = -1
+    unfreeze_percentage = max(unfreeze_percentage, 0.0)  
+    unfreeze_blocks = 0
     if model.name == 'InceptionV3':
         top_nodes = [280, 249, 229, 197]   # nodes of top layer-blocks: possible cut_off points
-        unfreeze_blocks = int(11*unfreeze_percentage)  # 
-        if unfreeze_blocks > 0:
-            cut_off = top_nodes[unfreeze_blocks-1]
+        unfreeze_blocks = int(11 * unfreeze_percentage)  # 
     elif model.name == 'Xception':
         top_nodes = [126, 116, 106, 96, 96]   
-        unfreeze_blocks = int(11*unfreeze_percentage)  # 
-        cut_off = top_nodes[unfreeze_blocks]
-        
-        cut_off = 116
+        unfreeze_blocks = int(12 * unfreeze_percentage)  # 
+        if unfreeze_blocks > 0:
+            cut_off = top_nodes[unfreeze_blocks-1]
     elif model.name == 'ResNet50':
-        cut_off = 152      
+        top_nodes = [161, 152, 140, 130, 120, 110]   
+        unfreeze_blocks = int(16 * unfreeze_percentage)  # 
+        if unfreeze_blocks > 0:
+            cut_off = top_nodes[unfreeze_blocks-1]
+    elif model.name == 'MobileNet':    # no nodes, cut_off after activations
+        top_nodes = [79, 76, 73, 70, 67, 64, 61, 58, 55, 52]          
+        unfreeze_blocks = int(27 * unfreeze_percentage)  # 
+        if unfreeze_blocks > 0:
+            cut_off = top_nodes[unfreeze_blocks-1]
+    elif model.name == 'InceptionResNetV2':    # no nodes, cut_off after activations
+        top_nodes = [761, 745, 729, 713, 697, 681, 665, 649, 633, 618, 594, 578, 562, 546]
+        unfreeze_blocks = int(43 * unfreeze_percentage)  # 
+        if unfreeze_blocks > 0:
+            cut_off = top_nodes[unfreeze_blocks-1]                
     else:
         print("invalid model: ", model.name)
 
-    for layer in model.layers[:cut_off]:
-       layer.trainable = False
-    for layer in model.layers[cut_off:]:
-       layer.trainable = True        
+    if unfreeze_blocks > 0:
         
-    # we need to recompile the model for these modifications to take effect
-    # we use SGD with a low learning rate
-    from keras.optimizers import SGD
-    model.compile(optimizer=SGD(lr=0.0001, momentum=0.9), loss='categorical_crossentropy', metrics=['accuracy'])
-    # model.compile(optimizer=SGD(lr=0.0001, momentum=0.9), loss='categorical_crossentropy')
-    
-    print("\n ****** unfrozen 2 top CNN layers ******")
+        cut_off = top_nodes[unfreeze_blocks-1]                
+        for layer in model.layers[:cut_off]:
+           layer.trainable = False
+        for layer in model.layers[cut_off:]:
+           layer.trainable = True        
+
+        from keras.optimizers import SGD
+        model.compile(optimizer=SGD(lr=config_dict['cnn_learning_rate'], momentum=0.9), 
+                      loss='categorical_crossentropy', metrics=['accuracy'])
+        print("\n ****** {} unfrozen {} top blocks, cut_off after layer {} ******".format(model.name, unfreeze_blocks, cut_off-1))
+    else:
+        print("\n ****** {} no layers unfrozen".format(model.name))
+        
     return model
 
 
@@ -237,7 +252,7 @@ def train(config_dict,
     #
  #  TODO change 0.7 1.0 to 0.0 0.3
     if training_epochs_wholemodel > 0:
-        model = _unfreeze_cnn_layers(model, unfreeze_percentage=unfreeze_percentage)
+        model = _unfreeze_cnn_layers(model, config_dict)
         hist_wholemodel = model.fit_generator(
             train_flow, 
             steps_per_epoch = num_train_imgs//batch_size,
@@ -265,7 +280,7 @@ def train(config_dict,
                           filename=csv_path)
 
     
-    hpbandster_loss = 1.0 - histories['val_acc'])[-1])
+    hpbandster_loss = 1.0 - histories['val_acc'][-1]
     runtime = time.time() - start_time
     return (loss, runtime, histories)
 
