@@ -226,8 +226,8 @@ def train(config_dict,
         # color_mode="grayscale",
         target_size=target_size,
         batch_size=batch_size, 
-        class_mode="categorical",
-        save_to_dir="preprocessed")
+        class_mode="categorical")
+        # save_to_dir="preprocessed")
     
     valid_gen = image.ImageDataGenerator(
         rescale=1./255,

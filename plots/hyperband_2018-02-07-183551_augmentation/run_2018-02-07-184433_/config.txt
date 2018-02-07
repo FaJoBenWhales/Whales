@@ -1,0 +1,5 @@
+configuration of this run:
+{'base_model': 'MobileNet', 'zoom_range': 0.27018782562527527, 'rotation_range': 21, 'optimizer': 'RMSProp', 'width_shift_range': 0.18029874995660997, 'num_dense_layers': 3, 'cnn_learning_rate': 0.0001, 'cnn_unlock_epoch': 20, 'num_dense_units_1': 1024, 'learning_rate': 0.001, 'num_dense_units_2': 1024, 'height_shift_range': 0.17337040776375992, 'batch_size': 16, 'activation': 'relu', 'unfreeze_percentage': 0.1, 'num_dense_units_0': 1024}
+epochs=1
+num_classes=10
+train_valid_split=0.7
