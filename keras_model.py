@@ -308,12 +308,12 @@ def eval_base_models(num_classes = 10, base_models = ['Dummy_model', 'InceptionV
                            'optimizer': "RMSProp",
                            'learning_rate': 0.0001,
                            'cnn_learning_rate': 0.0001,               
-                           'cnn_unlock_epoch': 3,
+                           'cnn_unlock_epoch': 20,
                            'unfreeze_percentage': 0.2,
                            'batch_size': 16}        
                
             model = _create_pretrained_model(config_dict, num_classes)
-            _, _, history = train(config_dict, epochs=6, model=model,num_classes=num_classes)
+            _, _, history = train(config_dict, epochs=30, model=model,num_classes=num_classes)
             avg_acc = np.mean(history['val_acc'][-5:])
             MAP = tools.compute_map(model, num_classes)  # based on prediction on validation data 
             
@@ -323,7 +323,7 @@ def eval_base_models(num_classes = 10, base_models = ['Dummy_model', 'InceptionV
         
     # print("results: ", results)
     
-    # ut.save_bar_plot(results, base_models)
+    ut.save_bar_plot(results, base_models, num_classes)
         
     return results
     

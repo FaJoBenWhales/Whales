@@ -375,7 +375,7 @@ def save_plot(x, ys, xlabel, ylabel, path, title=""):
     plt.savefig(path)
 
 
-def save_bar_plot(results, base_models):
+def save_bar_plot(results, base_models, num_classes):
     
     fig, ax = plt.subplots()
 
@@ -389,7 +389,7 @@ def save_bar_plot(results, base_models):
     # p2 = ax.bar(ind + width, womenMeans, width, color='y', bottom=0, yerr=womenStd)
     MAPs = ax.bar(ind + width, [r[1] for r in results], width, color='g', bottom=0)
 
-    ax.set_title('Mean accuaries and MAP of models')
+    ax.set_title('Mean accuracies and MAP\nof pretrained models at {} classes'.format(num_classes))
     ax.set_xticks(ind + width / 2)
 
     # bring x-axis labels into printable size            
@@ -405,8 +405,10 @@ def save_bar_plot(results, base_models):
     ax.legend((avg_accs[0], MAPs[0]), ('Acc', 'MAP'))
     # ax.yaxis.set_units(inch)
     ax.autoscale_view()
-
-plt.show()         
+    if not os.path.isdir("plots/base_models"):
+        os.makedirs("plots/base_models")
+    plt.savefig("plots/base_models/base_models.png")
+    plt.show()         
     
 
 def print_number_of_Whales():
