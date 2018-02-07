@@ -121,16 +121,17 @@ def get_keras_config_space():
     hpRaw = [
         #<    name              >   <  Range       >      <Default>     <Log>   <Type>
         ["base_model",              ["InceptionV3"],    "InceptionV3",  None,   "cat"],
-        ["num_dense_layers",        [1, 4],                 2,          False,  "int"],
-        ["num_dense_units_0",       [50, 500],              300,        True,   "int"],
+        ["num_dense_layers",        [2, 3],                 2,          False,  "int"],
+        ["num_dense_units_0",       [100, 1000],             300,       True,   "int"],
         ["num_dense_units_1",       [50, 500],              200,        True,   "int"],
-        ["num_dense_units_2",       [50, 500],              100,        True,   "int"],
-        ["num_dense_units_3",       [50, 500],              50,         True,   "int"],
+        ["num_dense_units_2",       [10, 300],              100,        True,   "int"],
+        # ["num_dense_units_3",       [50, 500],              50,         True,   "int"],
         ["activation",              ["relu", "tanh"],       "relu",     None,   "cat"],
         ["optimizer",               ["Adam", "SGD", 
                                      "RMSProp"],            "SGD",      None,   "cat"],
-        ["learning_rate",           [0.00001, 0.1],         0.001,      True,   "float"],
-        ["cnn_unlock_epoch",        [1000, 1500],           1500,       False,  "int"],
+        ["learning_rate",           [0.0001, 0.01],         0.001,      True,   "float"],
+        ["cnn_learning_rate",       [0.00001, 0.001],       0.0001,     True,   "float"],
+        ["cnn_unlock_epoch",        [10, 30],               20,         False,  "int"],
         ["unfreeze_percentage",     [0.0, 0.3],             0.1,        False,  "float"],
         ["batch_size",              [16, 64],               32,         True,   "int"],
     ]
@@ -138,7 +139,7 @@ def get_keras_config_space():
         #< conditional hp name      >   <cond. Type>    <cond. variable>        <cond. value>
         ["num_dense_units_1",           "gtr",          "num_dense_layers",     1],
         ["num_dense_units_2",           "gtr",          "num_dense_layers",     2],
-        ["num_dense_units_3",           "eq",           "num_dense_layers",     4],
+        # ["num_dense_units_3",           "eq",           "num_dense_layers",     4],
     ]
     return configuration_space_from_raw(hpRaw, hpRawConditions, resolve_multiple='AND')
 

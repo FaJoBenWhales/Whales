@@ -29,17 +29,21 @@ def get_keras_config_space():
 
 def keras_objective(config, epochs, *args, **kwargs):
     """Evaluate success of configuration config."""
-    load_model()
+    # load_model()   # TODO activate line
     return 0.5, 3, []
     # return loss, runtime, histories
 
 
 class WorkerWrapper(Worker):    
-    def compute(self, config, budget, *args, **kwargs):
-        loss, runtime, histories = keras_objective(
-            config,
-            epochs=int(budget),
-            *args, **kwargs)
+    def compute(self, config, budget, *args, **kwargs):	
+        print("budget:", budget)
+        try:
+            loss, runtime, histories = keras_objective(
+                config,
+                epochs=int(budget),
+                *args, **kwargs)
+        finally:
+            keras.backend.clear_session()  # avoids problems with multithreading
         return {
             'loss': loss,
             'info': {"runtime": runtime,
@@ -67,7 +71,7 @@ def test_hpbandster(min_budget=1, max_budget=5, job_queue_sizes=(0, 1)):
         job_queue_sizes=job_queue_sizes,
     )
     # runs one iteration if at least one worker is available
-    res = HB.run(10, min_n_workers=1)
+    res = HB.run(1, min_n_workers=1)
     # shutdown the worker and the dispatcher
     HB.shutdown(shutdown_workers=True)
     
