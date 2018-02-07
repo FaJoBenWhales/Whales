@@ -1,0 +1,5 @@
+configuration of this run:
+{'cnn_learning_rate': 0.0003180617517764209, 'base_model': 'InceptionV3', 'cnn_unlock_epoch': 29, 'batch_size': 34, 'optimizer': 'RMSProp', 'num_dense_units_1': 351, 'learning_rate': 0.009305904881615402, 'activation': 'tanh', 'num_dense_units_0': 614, 'unfreeze_percentage': 0.22460678057919478, 'num_dense_layers': 2}
+epochs=1
+num_classes=10
+train_valid_split=0.7

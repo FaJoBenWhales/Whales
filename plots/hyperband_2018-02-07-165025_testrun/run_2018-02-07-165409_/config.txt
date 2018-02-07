@@ -1,0 +1,5 @@
+configuration of this run:
+{'cnn_learning_rate': 0.0001275531196524047, 'base_model': 'InceptionV3', 'cnn_unlock_epoch': 26, 'batch_size': 61, 'optimizer': 'SGD', 'num_dense_units_1': 84, 'learning_rate': 0.006770631417021771, 'activation': 'relu', 'num_dense_units_0': 312, 'unfreeze_percentage': 0.08028918941269277, 'num_dense_layers': 2}
+epochs=1
+num_classes=10
+train_valid_split=0.7
