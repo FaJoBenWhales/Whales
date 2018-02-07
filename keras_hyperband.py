@@ -9,9 +9,12 @@ import ConfigSpace as CS
 import hpbandster.distributed.utils
 from hpbandster.distributed.worker import Worker
 import os
+import os.path
 import keras
 import keras_model
 import keras_tools as tools
+import pickle
+import utilities as ut
 
 
 
@@ -225,13 +228,19 @@ def optimize(objective=keras_objective,
         job_queue_sizes=job_queue_sizes,
     )
     # runs one iteration if at least one worker is available
-    res = HB.run(10, min_n_workers=1)
+    res = HB.run(1, min_n_workers=1)
 
     # shutdown the worker and the dispatcher
     HB.shutdown(shutdown_workers=True)
 
-    # TODO pickle res
-    # TODO save incumbent trajectory as csv
+    # pickle res
+    with open(os.path.join(path, "hyperband_res.pkl"), 'w+b') as f:
+        pickle.dump(res, f)
+    # save incumbent trajectory as csv
+    traj = res.get_incumbent_trajectory()
+    incumbent_performance = traj["losses"]
+    incumbent_perf_dict = {"hyperband_incumbent_trajectory": incumbent_performance}
+    ut.write_csv_dict(incumbent_perf_dict, filename=os.path.join(path, "incumbent_trajectory.csv"))
 
 #     # extract incumbent trajectory and all evaluated learning curves
 #     traj = res.get_incumbent_trajectory()
@@ -262,4 +271,4 @@ def optimize(objective=keras_objective,
 
 if __name__ == "__main__":
     print("optimizing keras_model.")
-    optimize(max_budget=5, run_name="testrun")
+    optimize(max_budget=2, run_name="testrun")

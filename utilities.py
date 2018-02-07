@@ -54,7 +54,7 @@ def write_csv_dict(csv_dict, keys=None, include_header=True, filename="csv.csv")
     with open(filename, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
         writer.writerow(keys)
-        for i in range(len(csv_dict[keys[0]])):
+        for i in range(len(csv_dict[list(keys)[0]])):
             writer.writerow([csv_dict[key][i] for key in keys])
 
 
