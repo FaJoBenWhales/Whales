@@ -15,7 +15,7 @@ import keras_model
 import keras_tools as tools
 import pickle
 import utilities as ut
-
+import numpy as np
 
 
 def configuration_space_from_raw(hpRaw, hpRawConditions, resolve_multiple='AND'):
@@ -137,7 +137,7 @@ def get_keras_config_space():
     ]
     hpRawConditions = [
         #< conditional hp name      >   <cond. Type>    <cond. variable>        <cond. value>
-        ["num_dense_units_1",           "gtr",          "num_dense_layers",     1],
+        # ["num_dense_units_1",           "gtr",          "num_dense_layers",     1],
         ["num_dense_units_2",           "gtr",          "num_dense_layers",     2],
         # ["num_dense_units_3",           "eq",           "num_dense_layers",     4],
     ]
@@ -196,7 +196,7 @@ def save_lcs(lcs, label, path="lcs.png"):
 def optimize(objective=keras_objective, 
              config_space_getter=get_keras_config_space,
              min_budget=1,
-             max_budget=127,
+             max_budget=128,
              job_queue_sizes=(0, 1),
              base_path="plots",
              run_name=""):
@@ -229,7 +229,8 @@ def optimize(objective=keras_objective,
         job_queue_sizes=job_queue_sizes,
     )
     # runs one iteration if at least one worker is available
-    res = HB.run(1, min_n_workers=1)
+    n_iters = int(np.log2(max_budget / min_budget))
+    res = HB.run(n_iters, min_n_workers=1)
 
     # shutdown the worker and the dispatcher
     HB.shutdown(shutdown_workers=True)
@@ -272,4 +273,4 @@ def optimize(objective=keras_objective,
 
 if __name__ == "__main__":
     print("optimizing keras_model.")
-    optimize(max_budget=2, run_name="testrun")
+    optimize(max_budget=128, run_name="testrun")

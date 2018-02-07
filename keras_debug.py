@@ -51,7 +51,7 @@ class WorkerWrapper(Worker):
         }
 
 
-def test_hpbandster(min_budget=1, max_budget=5, job_queue_sizes=(0, 1)):
+def test_hpbandster(min_budget=1, max_budget=128, job_queue_sizes=(0, 1)):
     nameserver, ns_port = hpbandster.distributed.utils.start_local_nameserver()
     # starting the worker in a separate thread
     w = WorkerWrapper(nameserver=nameserver, ns_port=ns_port)
@@ -71,7 +71,7 @@ def test_hpbandster(min_budget=1, max_budget=5, job_queue_sizes=(0, 1)):
         job_queue_sizes=job_queue_sizes,
     )
     # runs one iteration if at least one worker is available
-    res = HB.run(1, min_n_workers=1)
+    res = HB.run(7, min_n_workers=1)
     # shutdown the worker and the dispatcher
     HB.shutdown(shutdown_workers=True)
     
