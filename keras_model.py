@@ -284,43 +284,44 @@ def train(config_dict,
     runtime = time.time() - start_time
     return (hpbandster_loss, runtime, histories)
 
-
-def eval_base_models(num_classes = 10):
+# evaluate models based on different pretrained models and compare results:
+# perform prediction on validation data, compare with true labels and compute acc and MAP
+def eval_base_models(num_classes = 10, base_models = ['Dummy_model', 'InceptionV3']):
     
     def eval_base_model(base_model, num_classes):
-
-        config_dict = {'base_model': base_model, 
-                       'num_dense_layers': 3,
-                       'num_dense_units_0': 1024,
-                       'num_dense_units_1': 1024,
-                       'num_dense_units_2': 1024,
-                       'activation': 'relu',
-                       'dropout': False,
-                       'dropout_0': 1.0,
-                       'dropout_1': 1.0,
-                       'dropout_2': 1.0,
-                       'optimizer': "RMSProp",
-                       'learning_rate': 0.0001,
-                       'cnn_learning_rate': 0.0001,               
-                       'cnn_unlock_epoch': 2,
-                       'unfreeze_percentage': 0.2,
-                       'batch_size': 16}        
         
-        model = _create_pretrained_model(config_dict, num_classes)
-        _, _, history = train(config_dict, epochs=4, model=model,num_classes=num_classes)
-        accs = history['val_acc']
-        print("accs", accs)
-        avg_acc = np.mean(history['val_acc'][-5:])
-        MAP, _ = tools.print_model_test_info(model, num_classes)
+        if base_model == 'Dummy_model':
+            avg_acc = 1/num_classes
+            MAP = ut.mean_dummy_MAP()      # get MAP of dumb model based on data in validation directory
+        
+        else: 
+            config_dict = {'base_model': base_model, 
+                           'num_dense_layers': 3,
+                           'num_dense_units_0': 1024,
+                           'num_dense_units_1': 1024,
+                           'num_dense_units_2': 1024,
+                           'activation': 'relu',
+                           'dropout': False,
+                           'dropout_0': 1.0,
+                           'dropout_1': 1.0,
+                           'dropout_2': 1.0,
+                           'optimizer': "RMSProp",
+                           'learning_rate': 0.0001,
+                           'cnn_learning_rate': 0.0001,               
+                           'cnn_unlock_epoch': 3,
+                           'unfreeze_percentage': 0.2,
+                           'batch_size': 16}        
+               
+            model = _create_pretrained_model(config_dict, num_classes)
+            _, _, history = train(config_dict, epochs=6, model=model,num_classes=num_classes)
+            avg_acc = np.mean(history['val_acc'][-5:])
+            MAP = tools.compute_map(model, num_classes)  # based on prediction on validation data 
+            
         return (avg_acc, MAP)
 
-    # base_models = ['InceptionV3', 'MobileNet', 'ResNet50']
-    base_models = ['InceptionV3', 'MobileNet']
-    results = []
-    for base_model in base_models:
-        results.append = eval_base_model(base_model, num_classes)
-
-    print("results", results)
+    results = [eval_base_model(base_model, num_classes) for base_model in base_models]
+        
+    # print("results: ", results)
     
     # ut.save_bar_plot(results, base_models)
         
