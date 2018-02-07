@@ -58,6 +58,13 @@ def write_csv_dict(csv_dict, keys=None, include_header=True, filename="csv.csv")
             writer.writerow([csv_dict[key][i] for key in keys])
 
 
+def append_to_file(variable, filename):
+    with open(filename, 'a') as f:
+        f.write(str(variable))
+        f.write("\n")
+
+
+
 # generate sorted list clustered by individuals: 
 # (name, number of images, array of indeces into train_list)
 def get_whales(train_list):

@@ -15,7 +15,7 @@ from keras.applications.inception_resnet_v2 import InceptionResNetV2
 
 from keras.preprocessing import image
 from keras.models import Model
-from keras.layers import Dense, GlobalAveragePooling2D, Dropout
+from keras.layers import Dense, GlobalAveragePooling2D
 from keras import optimizers
 
 import utilities as ut
@@ -28,16 +28,11 @@ def _create_pretrained_model(config_dict, num_classes):
     # extract relevant parts of configuration
     #
     num_dense_units_list = []
-    dropout_list = []
     base_model = config_dict['base_model']
     num_dense_layers = config_dict['num_dense_layers']
     for i in range(num_dense_layers):
         num_dense_units_list.append(config_dict['num_dense_units_' + str(i)])
     activation = config_dict['activation']
-    dropout = config_dict["dropout"]
-    if dropout==True:
-        for i in range(num_dense_layers):
-            dropout_list.append(config_dict['dropout_' + str(i)])
     optimizer = config_dict['optimizer']
     learning_rate = config_dict['learning_rate']
 
@@ -71,8 +66,6 @@ def _create_pretrained_model(config_dict, num_classes):
     x = GlobalAveragePooling2D()(x)
     for i in range(num_dense_layers):
         x = Dense(num_dense_units_list[i], activation=activation)(x)
-        if dropout==True:
-            x = Dropout(dropout_list[i])(x)
     predictions = Dense(num_classes, activation='softmax')(x)
     #
     # finish building combined model, lock parameters of pretrained part
@@ -272,14 +265,18 @@ def train(config_dict,
 
     if save_data_path is not None:
         run_name = tools.get_run_name()
-        # TODO find bugs and reactivate following lines
-        #tools.save_learning_curves(histories, run_name, base_path=save_data_path)
-        #csv_path = os.path.join(save_data_path, run_name, run_name + ".csv")
-        #ut.write_csv_dict(histories,
-        #                  keys=['loss', 'acc', 'val_loss', 'val_acc'],
-        #                  filename=csv_path)
+        tools.save_learning_curves(histories, run_name, base_path=save_data_path)
+        csv_path = os.path.join(save_data_path, run_name, run_name + ".csv")
+        ut.write_csv_dict(histories,
+                          keys=['loss', 'acc', 'val_loss', 'val_acc'],
+                          filename=csv_path)
+        config_file_path = os.path.join(save_data_path, run_name, "config.txt")
+        ut.append_to_file("configuration of this run:", config_file_path)
+        ut.append_to_file(config_dict, config_file_path)
+        ut.append_to_file("epochs=" + str(epochs), config_file_path)
+        ut.append_to_file("num_classes=" + str(num_classes), config_file_path)
+        ut.append_to_file("train_valid_split=" + str(train_valid_split), config_file_path)
 
-    
     hpbandster_loss = 1.0 - histories['val_acc'][-1]
     runtime = time.time() - start_time
     return (hpbandster_loss, runtime, histories)
@@ -295,10 +292,6 @@ def eval_base_models(num_classes = 10):
                        'num_dense_units_1': 1024,
                        'num_dense_units_2': 1024,
                        'activation': 'relu',
-                       'dropout': False,
-                       'dropout_0': 1.0,
-                       'dropout_1': 1.0,
-                       'dropout_2': 1.0,
                        'optimizer': "RMSProp",
                        'learning_rate': 0.0001,
                        'cnn_learning_rate': 0.0001,               
@@ -336,10 +329,6 @@ def main():
                    'num_dense_units_1': 250,
                    'num_dense_units_2': 50,
                    'activation': 'relu',
-                   'dropout': True,
-                   'dropout_0': 0.5,
-                   'dropout_1': 0.5,
-                   'dropout_2': 0.5,
                    'optimizer': "SGD",
                    'learning_rate': 0.001,
                    'cnn_unlock_epoch': 8,

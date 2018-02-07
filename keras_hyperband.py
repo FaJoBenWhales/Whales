@@ -124,11 +124,6 @@ def get_keras_config_space():
         ["num_dense_units_2",       [50, 500],              100,        True,   "int"],
         ["num_dense_units_3",       [50, 500],              50,         True,   "int"],
         ["activation",              ["relu", "tanh"],       "relu",     None,   "cat"],
-        ["dropout",                 [True, False],          False,      None,   "cat"],
-        ["dropout_0",               [0.0, 1.0],             0.5,        False,  "float"],
-        ["dropout_1",               [0.0, 1.0],             0.5,        False,  "float"],
-        ["dropout_2",               [0.0, 1.0],             0.5,        False,  "float"],
-        ["dropout_3",               [0.0, 1.0],             0.5,        False,  "float"],
         ["optimizer",               ["Adam", "SGD", 
                                      "RMSProp"],            "SGD",      None,   "cat"],
         ["learning_rate",           [0.00001, 0.1],         0.001,      True,   "float"],
@@ -141,13 +136,6 @@ def get_keras_config_space():
         ["num_dense_units_1",           "gtr",          "num_dense_layers",     1],
         ["num_dense_units_2",           "gtr",          "num_dense_layers",     2],
         ["num_dense_units_3",           "eq",           "num_dense_layers",     4],
-        ["dropout_0",                   "eq",           "dropout",              True],
-        ["dropout_1",                   "eq",           "dropout",              True],
-        ["dropout_2",                   "eq",           "dropout",              True],
-        ["dropout_3",                   "eq",           "dropout",              True],
-        ["dropout_1",                   "gtr",          "num_dense_layers",     1],
-        ["dropout_2",                   "gtr",          "num_dense_layers",     2],
-        ["dropout_3",                   "eq",           "num_dense_layers",     4],
     ]
     return configuration_space_from_raw(hpRaw, hpRawConditions, resolve_multiple='AND')
 
@@ -165,13 +153,14 @@ class WorkerWrapper(Worker):
         super().__init__(*args, **kwargs)
     
     def compute(self, config, budget, *args, **kwargs):
-        # cfg = CS.Configuration(cs, values=config)
-        loss, runtime, histories = self.objective_function(
-            config,
-            epochs=int(budget),
-            base_path=self.save_data_path,
-            *args, **kwargs)
-        keras.backend.clear_session()  # avoids problems with multithreading
+        try:
+            loss, runtime, histories = self.objective_function(
+                config,
+                epochs=int(budget),
+                base_path=self.save_data_path,
+                *args, **kwargs)
+        finally:
+            keras.backend.clear_session()  # avoids problems with multithreading
         return {
             'loss': loss,
             'info': {"runtime": runtime,
@@ -273,4 +262,4 @@ def optimize(objective=keras_objective,
 
 if __name__ == "__main__":
     print("optimizing keras_model.")
-    optimize(max_budget=5)
+    optimize(max_budget=5, run_name="testrun")
