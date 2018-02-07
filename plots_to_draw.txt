@@ -1,0 +1,14 @@
+* Wollen noch machen:
+** beste Augmentation vs. ohne Augmentation (Hyperband der Configs)	:Ben:
+** Sprung nach unfreeze (prototypischer Verlauf)		     :Jochen:
+** num_classes: beste validation accuracy eines fixen Modells (logarithmisch) :Jochen:
+** Hyperband: Skript für incumbent trajectory 			     :Fabian:
+** Hyperband: Skript für Strauß aller evaluierten Kurven 	     :Fabian:
+** Beispiele Augmentation-Bilder				     :Jochen:
+** verschiedene Modelle im Vergleich 				     :Jochen:
+
+
+** Abschneidepunkt beim pretrained Model optimieren
+** Beste Konfiguration aufschreiben
+** Poster fertig machen						     :Jochen:
+** überall: Hyperband: pretrained model als Parameter
