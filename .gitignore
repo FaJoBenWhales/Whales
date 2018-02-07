@@ -30,3 +30,8 @@ HpBandSter/
 dist/
 hpbandster.egg-info/
 *.h5
+plots/unversioned
+
+
+# emacs merge files
+*.orig
