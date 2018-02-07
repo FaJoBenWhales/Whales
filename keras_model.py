@@ -306,7 +306,7 @@ def eval_base_models(num_classes = 10, base_models = ['Dummy_model', 'InceptionV
                            'dropout_1': 1.0,
                            'dropout_2': 1.0,
                            'optimizer': "RMSProp",
-                           'learning_rate': 0.0001,
+                           'learning_rate': 0.001,
                            'cnn_learning_rate': 0.0001,               
                            'cnn_unlock_epoch': 20,
                            'unfreeze_percentage': 0.2,
@@ -320,13 +320,55 @@ def eval_base_models(num_classes = 10, base_models = ['Dummy_model', 'InceptionV
         return (avg_acc, MAP)
 
     results = [eval_base_model(base_model, num_classes) for base_model in base_models]
+    
+    # ut.save_plot_num_classes(results, num_classes_arr)
+        
+    return results
+
+# evaluate results at different number of classes and plot synopsys
+# at each case show dummy model as benchmark
+def eval_num_classes(num_classes_arr = [3,10,50,200,1000,4250], base_model = 'MobileNet'):
+    
+    def eval_num_cls(base_model, num_classes):
+
+        config_dict = {'base_model': base_model, 
+                       'num_dense_layers': 3,
+                       'num_dense_units_0': 1024,
+                       'num_dense_units_1': 1024,
+                       'num_dense_units_2': 1024,
+                       'activation': 'relu',
+                       'dropout': False,
+                       'dropout_0': 1.0,
+                       'dropout_1': 1.0,
+                       'dropout_2': 1.0,
+                       'optimizer': "RMSProp",
+                       'learning_rate': 0.0001,
+                       'cnn_learning_rate': 0.0001,               
+                       'cnn_unlock_epoch': 3,
+                       'unfreeze_percentage': 0.2,
+                       'batch_size': 16}        
+
+        model = _create_pretrained_model(config_dict, num_classes)
+        _, _, history = train(config_dict, epochs=6, model=model,num_classes=num_classes)
+        avg_acc = np.mean(history['val_acc'][-5:])
+        print("num_classes", num_classes)
+        MAP = tools.compute_map(model, num_classes)  # based on prediction on validation data 
+
+        dummy_avg_acc = 1/num_classes
+        dummy_MAP = ut.mean_dummy_MAP()      # get MAP of dumb model based on data in validation directory            
+            
+        return (MAP, dummy_avg_acc, dummy_MAP)
+
+    results = [eval_num_cls(base_model, num_classes) for num_classes in num_classes_arr]
         
     # print("results: ", results)
     
-    ut.save_bar_plot(results, base_models, num_classes)
+    # ut.save_plot_num_classes(results, base_models, num_classes)
         
     return results
-    
+
+
+
     
 def main():
     print("****** Run short training with InceptionV3 and save results. ******")

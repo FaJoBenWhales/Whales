@@ -374,43 +374,63 @@ def save_plot(x, ys, xlabel, ylabel, path, title=""):
     plt.ylabel(ylabel)
     plt.savefig(path)
 
-
-def save_bar_plot(results, base_models, num_classes):
+# plot twin-bars given labels for x-axis
+def save_bar_plot(results, x_axis_ticks, num_classes):
     
     fig, ax = plt.subplots()
 
     ind = np.arange(len(results))    # the x locations for the groups
     width = 0.35         # the width of the bars
-    # p1 = ax.bar(ind, menMeans, width, color='r', bottom=0, yerr=menStd)
     avg_accs = ax.bar(ind, [r[0] for r in results], width, color='b', bottom=0)
     
-    # womenMeans = (145, 149, 172, 165, 200)
-    # womenStd = (30, 25, 20, 31, 22)
-    # p2 = ax.bar(ind + width, womenMeans, width, color='y', bottom=0, yerr=womenStd)
     MAPs = ax.bar(ind + width, [r[1] for r in results], width, color='g', bottom=0)
 
     ax.set_title('Mean accuracies and MAP\nof pretrained models at {} classes'.format(num_classes))
     ax.set_xticks(ind + width / 2)
 
     # bring x-axis labels into printable size            
-    print_models = copy.deepcopy(base_models)
-    for i, model in enumerate(print_models): 
+    xticks = copy.deepcopy(x_axis_ticks)
+    for i, model in enumerate(xticks): 
         if model == 'Dummy_model':
-            print_models[i] = 'Dummy\nmodel'
+            xticks[i] = 'Dummy\nmodel'
         elif model == 'InceptionResNetV2':
-            print_models[i] = 'Inception\nResNetV2'             
+            xticks[i] = 'Inception\nResNetV2'             
     
-    ax.set_xticklabels(print_models)
+    ax.set_xticklabels(xticks)
 
-    ax.legend((avg_accs[0], MAPs[0]), ('Acc', 'MAP'))
-    # ax.yaxis.set_units(inch)
+    ax.legend((avg_accs[0], MAPs[0]), ('accuracy', 'MAP'))
     ax.autoscale_view()
-    if not os.path.isdir("plots/base_models"):
-        os.makedirs("plots/base_models")
-    plt.savefig("plots/base_models/base_models.png")
+    if not os.path.isdir("plots/poster_plots"):
+        os.makedirs("plots/poster_plots")
+    plt.savefig("plots/poster_plots/base_models.png")
     plt.show()         
-    
 
+# plot twin-bars given labels for x-axis
+def save_plot_num_classes(results, x_axis_ticks):
+    
+    fig, ax = plt.subplots()
+
+    ind = np.arange(len(results))    # the x locations for the groups
+    width = 0.35         # the width of the bars
+    avg_accs = ax.bar(ind, [r[0] for r in results], width, color='b', bottom=0)
+    
+    MAPs = ax.bar(ind + width, [r[1] for r in results], width, color='g', bottom=0)
+
+    ax.set_title('MAPs of model versus dummy MAPs\nfor different number of classes')
+    ax.set_xticks(ind + width / 2)
+
+    # bring x-axis labels into printable size            
+    xticks = copy.deepcopy(x_axis_ticks)
+    ax.set_xticklabels(xticks)
+
+    ax.legend((avg_accs[0], MAPs[0]), ('Model MAP', 'Dummy MAP'))
+    ax.autoscale_view()
+    if not os.path.isdir("plots/poster_plots"):
+        os.makedirs("plots/poster_plots")
+    plt.savefig("plots/poster_plots/num_classes.png")
+    plt.show()    
+    
+    
 def print_number_of_Whales():
     csv_list = read_csv()
     w = get_whales(csv_list)
