@@ -5,7 +5,9 @@
 
 import datetime
 import os
+import numpy as np
 from keras.applications.inception_v3 import InceptionV3
+from keras.preprocessing import image
 import keras.utils
 import utilities as ut
 
@@ -84,6 +86,7 @@ def compute_map(model, num_classes):
     test_dir = "data/model_valid"
     test_csv = "data/model_valid.csv"  
     batch_size = 16     # used for training as well as validation
+    max_preds = 5        # number of ranked predictions (default 5)
     
     if model.name == 'InceptionV3' or model.name == 'Xception' or model.name == 'InceptionResNetV2':
         target_size = (299, 299)
@@ -111,15 +114,16 @@ def compute_map(model, num_classes):
 
     test_flow = test_gen.flow_from_directory(
         test_dir,
-        # color_mode = "grayscale",
+        shuffle=False,          
         batch_size = batch_size,     
         target_size = target_size,
         class_mode = None)    # use "categorical" ??
     
     preds = model.predict_generator(test_flow, verbose = 1)
 
-    whale_class_map = (test_flow.class_indices)           # get dict mapping whalenames --> class_no
+    # whale_class_map = (test_flow.class_indices)           # get dict mapping whalenames --> class_no
     class_whale_map = ut.make_label_dict(directory=test_dir) # get dict mapping class_no --> whalenames
+    '''
     print("whale_class_map:")
     print(whale_class_map)
     print("class_whale_map:")
@@ -128,7 +132,7 @@ def compute_map(model, num_classes):
     print(preds.shape)
     print("preds[:10]")
     print(preds[:10])
-    
+    '''
     # get list of model predictions: one ordered list of maxpred whalenames per image
     top_k = preds.argsort()[:, -max_preds:][:, ::-1]
     model_preds = [([class_whale_map[i] for i in line]) for line in top_k]  
@@ -141,8 +145,8 @@ def compute_map(model, num_classes):
         whale = [line[1] for line in test_list if line[0]==filename][0]
         true_labels.append(whale)
 
-    print("model predictions: \n", np.array(model_preds)[0:10])
-    print("true labels \n", np.array(true_labels)[0:10])
+    # print("model predictions: \n", np.array(model_preds)[0:10])
+    # print("true labels \n", np.array(true_labels)[0:10])
     
     # compute accuracy by hand
     TP_List = [(1 if model_preds[i][0]==true_labels[i] else 0) for i in range(len(true_labels))]
