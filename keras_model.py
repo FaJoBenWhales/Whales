@@ -101,6 +101,8 @@ def _unfreeze_cnn_layers(model, config_dict):
     # we chose to train the top X layers, where X is one of the nodes of the CNN
     # the first 2 layer blocks and unfreeze the rest:
     
+    print(config_dict)
+    
     unfreeze_percentage = config_dict["unfreeze_percentage"]
     unfreeze_percentage = min(unfreeze_percentage, 0.3)  
     unfreeze_percentage = max(unfreeze_percentage, 0.0)  
@@ -149,7 +151,7 @@ def _unfreeze_cnn_layers(model, config_dict):
     return model
 
 
-def train(config_dict, 
+def train(config_dict,
           epochs,
           model=None,
           num_classes=10,
@@ -166,6 +168,10 @@ def train(config_dict,
     cnn_unlock_epoch = config_dict["cnn_unlock_epoch"]
     unfreeze_percentage = config_dict["unfreeze_percentage"]
     batch_size = config_dict['batch_size']
+    zoom_range = config_dict['zoom_range']
+    width_shift_range = config_dict['width_shift_range']
+    height_shift_range = config_dict['height_shift_range']
+    rotation_range = config_dict['rotation_range']    
     
     #
     # get model to train, determine training times
@@ -206,11 +212,13 @@ def train(config_dict,
         rescale=1./255,   # redundant with featurewise_center ? 
         # preprocessing_function=preprocess_input, not used in most examples
         # horizontal_flip = True,    # no, as individual shapes are looked for
+        samplewise_center=True,
+        samplewise_std_normalization=True,
         fill_mode="nearest",
-        zoom_range=0.3,
-        width_shift_range=0.3,
-        height_shift_range=0.3,
-        rotation_range=30)
+        zoom_range=zoom_range,
+        width_shift_range=width_shift_range,
+        height_shift_range=height_shift_range,
+        rotation_range=rotation_range)
     
     train_flow = train_gen.flow_from_directory(
         train_dir,
@@ -218,7 +226,8 @@ def train(config_dict,
         # color_mode="grayscale",
         target_size=target_size,
         batch_size=batch_size, 
-        class_mode="categorical")
+        class_mode="categorical",
+        save_to_dir="preprocessed")
     
     valid_gen = image.ImageDataGenerator(
         rescale=1./255,
@@ -297,7 +306,11 @@ def eval_base_models(num_classes = 10):
                        'cnn_learning_rate': 0.0001,               
                        'cnn_unlock_epoch': 2,
                        'unfreeze_percentage': 0.2,
-                       'batch_size': 16}        
+                       'batch_size': 16,
+                       'zoom_range': 0.1,
+                       'width_shift_range': 0.1,
+                       'height_shift_range': 0.1,
+                       'rotation_range': 10}
         
         model = _create_pretrained_model(config_dict, num_classes)
         _, _, history = train(config_dict, epochs=4, model=model,num_classes=num_classes)
@@ -323,18 +336,23 @@ def eval_base_models(num_classes = 10):
 def main():
     print("****** Run short training with InceptionV3 and save results. ******")
     num_classes = 10
-    config_dict = {'base_model': 'InceptionV3', 
+    config_dict = {'base_model': 'MobileNet', 
                    'num_dense_layers': 3,
-                   'num_dense_units_0': 500,
-                   'num_dense_units_1': 250,
-                   'num_dense_units_2': 50,
+                   'num_dense_units_0': 1024,
+                   'num_dense_units_1': 1024,
+                   'num_dense_units_2': 1024,
                    'activation': 'relu',
-                   'optimizer': "SGD",
+                   'optimizer': "RMSProp",
                    'learning_rate': 0.001,
-                   'cnn_unlock_epoch': 8,
+                   'cnn_learning_rate': 0.0001,
+                   'cnn_unlock_epoch': 20,
                    'unfreeze_percentage': 0.1,
-                   'batch_size': 16}
-    _, _, histories = train(config_dict, epochs=16, num_classes=num_classes)
+                   'batch_size': 16,
+                   'zoom_range': 0.1,
+                   'width_shift_range': 0.1,
+                   'height_shift_range': 0.1,
+                   'rotation_range': 10}
+    _, _, histories = train(config_dict, epochs=40, num_classes=num_classes)
     print("HISTORIES:")
     print(histories)
     run_name = tools.get_run_name()

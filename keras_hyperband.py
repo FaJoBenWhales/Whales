@@ -9,6 +9,7 @@ import ConfigSpace as CS
 import hpbandster.distributed.utils
 from hpbandster.distributed.worker import Worker
 import os
+import sys
 import os.path
 import keras
 import keras_model
@@ -24,7 +25,14 @@ def configuration_space_from_raw(hpRaw, hpRawConditions, resolve_multiple='AND')
     # add hyperparameters
     #
     for hp in hpRaw:
-        if hp[4] == "float":
+        if hp[1] is None:
+            cs.add_hyperparameter(
+                CS.Constant(
+                    hp[0],
+                    hp[2]
+                    )
+                )
+        elif hp[4] == "float":
             cs.add_hyperparameter(
                 CS.UniformFloatHyperparameter(
                     hp[0],
@@ -117,6 +125,35 @@ def configuration_space_from_raw(hpRaw, hpRawConditions, resolve_multiple='AND')
 #   optimizer: Adam, SGD, RMSProp
 #   learning_rate
 #   batch_size
+def get_augmentation_config_space():
+    hpRaw = [
+        #<    name              >   <  Range       >        <Default>       <Log>   <Type>
+        ["base_model",              ["MobileNet"],          "MobileNet",    None,   "cat"],
+        ["num_dense_layers",        None,                   3,              False,  "int"],
+        ["num_dense_units_0",       None,                   1024,           True,   "int"],
+        ["num_dense_units_1",       None,                   1024,           True,   "int"],
+        ["num_dense_units_2",       None,                   1024,           True,   "int"],
+        # ["num_dense_units_3",       [50, 500],              50,         True,   "int"],
+        ["activation",              ["relu"],               "relu",         None,   "cat"],
+        ["optimizer",               ["RMSProp"],            "RMSProp",      None,   "cat"],
+        ["learning_rate",           None,                   0.001,          True,   "float"],
+        ["cnn_learning_rate",       None,                   0.0001,         True,   "float"],
+        ["cnn_unlock_epoch",        None,                   20,             False,  "int"],
+        ["unfreeze_percentage",     None,                   0.1,            False,  "float"],
+        ["batch_size",              None,                   16,             True,   "int"],
+        ["zoom_range",              [0.0, 0.3],             0.1,            False,  "float"],
+        ["width_shift_range",       [0.0, 0.3],             0.1,            False,  "float"],
+        ["height_shift_range",      [0.0, 0.3],             0.1,            False,  "float"],
+        ["rotation_range",          [0, 30],                10,             False,  "int"],
+    ]
+    hpRawConditions = [
+        #< conditional hp name      >   <cond. Type>    <cond. variable>        <cond. value>
+        # ["num_dense_units_1",           "gtr",          "num_dense_layers",     1],
+        # ["num_dense_units_2",           "gtr",          "num_dense_layers",     2],
+        # ["num_dense_units_3",           "eq",           "num_dense_layers",     4],
+    ]
+    return configuration_space_from_raw(hpRaw, hpRawConditions, resolve_multiple='AND')
+
 def get_keras_config_space():
     hpRaw = [
         #<    name              >   <  Range       >      <Default>     <Log>   <Type>
@@ -134,6 +171,10 @@ def get_keras_config_space():
         ["cnn_unlock_epoch",        [10, 30],               20,         False,  "int"],
         ["unfreeze_percentage",     [0.0, 0.3],             0.1,        False,  "float"],
         ["batch_size",              [16, 64],               32,         True,   "int"],
+        ["zoom_range",              [0.0, 0.3],             0.1,        False,  "float"],
+        ["width_shift_range",       [0.0, 0.3],             0.1,        False,  "float"],
+        ["height_shift_range",      [0.0, 0.3],             0.1,        False,  "float"],
+        ["rotation_range",          [0, 30],                10,         False,  "int"],
     ]
     hpRawConditions = [
         #< conditional hp name      >   <cond. Type>    <cond. variable>        <cond. value>
@@ -272,5 +313,14 @@ def optimize(objective=keras_objective,
         
 
 if __name__ == "__main__":
-    print("optimizing keras_model.")
-    optimize(max_budget=128, run_name="testrun")
+
+    if "--augmentation" in sys.argv:
+        print("oprimizing data augmentation.")
+        optimize(max_budget=64, run_name="augmentation", config_space_getter=get_augmentation_config_space)
+        exit()
+    else:
+        print("optimizing keras_model.")
+        optimize(max_budget=128, run_name="testrun")
+        exit()
+        
+    print("given command line options unknown.")
