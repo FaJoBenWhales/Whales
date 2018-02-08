@@ -155,11 +155,15 @@ def get_augmentation_config_space():
     return configuration_space_from_raw(hpRaw, hpRawConditions, resolve_multiple='AND')
 
 
-#A "beste-augmentation fix & andere params variabel original", num_classes=10, maxbudget=64, raum der anderen parameter wie gestern eingestellt, nur InceptionV3
-def get_space_A()
+B "beste-augmentation fix & andere params variabel extended", num_classes=10, maxbudget=64, raum der anderen parameter wie gestern eingestellt AUSSER alle Basis-Modelle erlauben.
+def get_space_B()
     hpRaw = [
         #<    name              >   <  Range       >      <Default>     <Log>   <Type>
-        ["base_model",              ["InceptionV3"],    "InceptionV3",  None,   "cat"],
+        ["base_model",              ["InceptionV3",
+                                     "Xception",
+                                     "ResNet50",
+                                     "MobileNet",
+                                     "InceptionResNetV2"],     "MobileNet",  None,   "cat"],
         ["num_dense_layers",        [2, 3],                 2,          False,  "int"],
         ["num_dense_units_0",       [100, 1000],             300,       True,   "int"],
         ["num_dense_units_1",       [50, 500],              200,        True,   "int"],
@@ -346,7 +350,7 @@ def optimize(objective=keras_objective,
         
 
 if __name__ == "__main__":
-    print("optimizing with fixed augmentation.")
-    optimize(max_budget=64, run_name="fixed_aug", config_space_getter=get_space_A)
+    print("optimizing with fixed augmentation including all models.")
+    optimize(max_budget=64, run_name="fixed_aug_all_models", config_space_getter=get_space_B)
     exit()
         
