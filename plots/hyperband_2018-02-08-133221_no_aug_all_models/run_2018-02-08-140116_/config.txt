@@ -1,0 +1,5 @@
+configuration of this run:
+{'num_dense_layers': 3, 'optimizer': 'Adam', 'width_shift_range': 0.0, 'height_shift_range': 0.0, 'num_dense_units_0': 373, 'zoom_range': 0.0, 'cnn_learning_rate': 2.740421875387178e-05, 'unfreeze_percentage': 0.273090266340852, 'rotation_range': 0, 'cnn_unlock_epoch': 30, 'num_dense_units_1': 72, 'batch_size': 38, 'num_dense_units_2': 17, 'learning_rate': 0.003382010468032159, 'base_model': 'MobileNet', 'activation': 'relu'}
+epochs=4
+num_classes=10
+train_valid_split=0.7

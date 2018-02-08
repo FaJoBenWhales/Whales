@@ -1,0 +1,5 @@
+configuration of this run:
+{'num_dense_layers': 3, 'optimizer': 'SGD', 'width_shift_range': 0.0, 'height_shift_range': 0.0, 'num_dense_units_0': 331, 'zoom_range': 0.0, 'cnn_learning_rate': 7.407320852121033e-05, 'unfreeze_percentage': 0.1677111577470082, 'rotation_range': 0, 'cnn_unlock_epoch': 25, 'num_dense_units_1': 68, 'batch_size': 43, 'num_dense_units_2': 249, 'learning_rate': 0.008220722803225538, 'base_model': 'ResNet50', 'activation': 'tanh'}
+epochs=32
+num_classes=10
+train_valid_split=0.7

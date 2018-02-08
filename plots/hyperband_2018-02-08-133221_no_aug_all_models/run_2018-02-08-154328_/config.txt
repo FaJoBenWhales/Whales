@@ -1,0 +1,5 @@
+configuration of this run:
+{'num_dense_layers': 2, 'optimizer': 'Adam', 'width_shift_range': 0.0, 'height_shift_range': 0.0, 'num_dense_units_0': 736, 'zoom_range': 0.0, 'cnn_learning_rate': 2.1515347899531767e-05, 'unfreeze_percentage': 0.08351197676342967, 'rotation_range': 0, 'cnn_unlock_epoch': 24, 'num_dense_units_1': 71, 'batch_size': 24, 'learning_rate': 0.0013104844753106392, 'base_model': 'Xception', 'activation': 'relu'}
+epochs=32
+num_classes=10
+train_valid_split=0.7

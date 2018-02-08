@@ -1,0 +1,5 @@
+configuration of this run:
+{'num_dense_layers': 2, 'optimizer': 'SGD', 'width_shift_range': 0.0, 'height_shift_range': 0.0, 'num_dense_units_0': 118, 'zoom_range': 0.0, 'cnn_learning_rate': 0.00020406519848999814, 'unfreeze_percentage': 0.20903848439021575, 'rotation_range': 0, 'cnn_unlock_epoch': 20, 'num_dense_units_1': 166, 'batch_size': 34, 'learning_rate': 0.0008879745137915533, 'base_model': 'MobileNet', 'activation': 'tanh'}
+epochs=16
+num_classes=10
+train_valid_split=0.7

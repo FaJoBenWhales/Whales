@@ -1,0 +1,5 @@
+configuration of this run:
+{'num_dense_layers': 2, 'optimizer': 'RMSProp', 'width_shift_range': 0.0, 'height_shift_range': 0.0, 'num_dense_units_0': 785, 'zoom_range': 0.0, 'cnn_learning_rate': 0.0009344771029197748, 'unfreeze_percentage': 0.19338138495722026, 'rotation_range': 0, 'cnn_unlock_epoch': 30, 'num_dense_units_1': 79, 'batch_size': 31, 'learning_rate': 0.007005588697838697, 'base_model': 'Xception', 'activation': 'relu'}
+epochs=2
+num_classes=10
+train_valid_split=0.7

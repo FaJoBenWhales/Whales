@@ -1,0 +1,5 @@
+configuration of this run:
+{'num_dense_layers': 2, 'optimizer': 'RMSProp', 'width_shift_range': 0.0, 'height_shift_range': 0.0, 'num_dense_units_0': 717, 'zoom_range': 0.0, 'cnn_learning_rate': 1.1927334354314783e-05, 'unfreeze_percentage': 0.21190422901306152, 'rotation_range': 0, 'cnn_unlock_epoch': 18, 'num_dense_units_1': 165, 'batch_size': 35, 'learning_rate': 0.0024125677220158846, 'base_model': 'ResNet50', 'activation': 'relu'}
+epochs=4
+num_classes=10
+train_valid_split=0.7

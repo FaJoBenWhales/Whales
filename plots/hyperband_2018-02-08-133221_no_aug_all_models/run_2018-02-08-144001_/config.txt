@@ -1,0 +1,5 @@
+configuration of this run:
+{'num_dense_layers': 2, 'optimizer': 'SGD', 'width_shift_range': 0.0, 'height_shift_range': 0.0, 'num_dense_units_0': 993, 'zoom_range': 0.0, 'cnn_learning_rate': 4.516626323296138e-05, 'unfreeze_percentage': 0.15388960110982627, 'rotation_range': 0, 'cnn_unlock_epoch': 30, 'num_dense_units_1': 103, 'batch_size': 23, 'learning_rate': 0.00493046747113642, 'base_model': 'ResNet50', 'activation': 'relu'}
+epochs=4
+num_classes=10
+train_valid_split=0.7

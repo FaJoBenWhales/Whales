@@ -1,0 +1,5 @@
+configuration of this run:
+{'num_dense_layers': 2, 'optimizer': 'RMSProp', 'width_shift_range': 0.0, 'height_shift_range': 0.0, 'num_dense_units_0': 596, 'zoom_range': 0.0, 'cnn_learning_rate': 6.075112003970132e-05, 'unfreeze_percentage': 0.18214831344469687, 'rotation_range': 0, 'cnn_unlock_epoch': 23, 'num_dense_units_1': 126, 'batch_size': 31, 'learning_rate': 0.002310184814343086, 'base_model': 'InceptionResNetV2', 'activation': 'tanh'}
+epochs=2
+num_classes=10
+train_valid_split=0.7

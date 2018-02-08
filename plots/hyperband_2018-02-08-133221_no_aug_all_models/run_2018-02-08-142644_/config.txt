@@ -1,0 +1,5 @@
+configuration of this run:
+{'num_dense_layers': 2, 'optimizer': 'Adam', 'width_shift_range': 0.0, 'height_shift_range': 0.0, 'num_dense_units_0': 508, 'zoom_range': 0.0, 'cnn_learning_rate': 0.0001745473799498149, 'unfreeze_percentage': 0.11834969158639597, 'rotation_range': 0, 'cnn_unlock_epoch': 19, 'num_dense_units_1': 94, 'batch_size': 42, 'learning_rate': 0.0013236387348095954, 'base_model': 'ResNet50', 'activation': 'relu'}
+epochs=2
+num_classes=10
+train_valid_split=0.7
