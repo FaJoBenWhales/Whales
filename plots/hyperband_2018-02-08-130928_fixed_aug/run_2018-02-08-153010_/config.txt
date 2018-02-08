@@ -1,0 +1,5 @@
+configuration of this run:
+{'num_dense_units_2': 270, 'batch_size': 59, 'cnn_unlock_epoch': 13, 'num_dense_layers': 3, 'zoom_range': 0.273, 'base_model': 'InceptionV3', 'learning_rate': 0.00011284085160596672, 'num_dense_units_0': 100, 'width_shift_range': 0.013, 'height_shift_range': 0.267, 'num_dense_units_1': 241, 'activation': 'tanh', 'unfreeze_percentage': 0.17734887614872777, 'cnn_learning_rate': 0.0009663317232126118, 'rotation_range': 24, 'optimizer': 'SGD'}
+epochs=16
+num_classes=10
+train_valid_split=0.7
