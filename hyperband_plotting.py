@@ -13,12 +13,14 @@ def plot_hyperband_trajectory(path, title="Hyperband incumbent trajectory"):
     csv = ut.read_csv_dict(filename=filename)
     trajectory = csv['hyperband_incumbent_trajectory']
     x = list(range(len(trajectory)))
+    trajectory = [float(x) for x in trajectory]
     ut.save_plot(x=x,
                  ys=dict([("incumbent", trajectory)]),
                  xlabel="iteration",
                  ylabel="validation error",
                  path=os.path.join(path, "trajectory.png"),
-                 title=title)
+                 title=title,
+                 style=['x'])
     
 
 def plot_learning_curves(path, title="Hyperband: evaluated learning curves"):
@@ -33,16 +35,15 @@ def plot_learning_curves(path, title="Hyperband: evaluated learning curves"):
         val_error = [1.0 - float(acc) for acc in csv['val_acc']]
         ys[run_name] = val_error
 
-    max_select = [len(ys[key]) for key in ys]
-    max_length = max(max_select)
-    x = list(range(max_length))
-    ut.save_plot(x=x,
+    max_length = max(len(lc) for lc in ys.values())
+    ut.save_plot(x=list(range(max_length)),
                  ys=ys,
                  xlabel="epoch",
                  ylabel="vaidation error",
                  path=os.path.join(path, "learning_curves.png"),
                  title=title,
-                 legend=False)
+                 legend=False,
+                 figsize=(20, 16))
 
 
 if __name__ == '__main__':
