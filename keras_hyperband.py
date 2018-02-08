@@ -156,7 +156,7 @@ def get_augmentation_config_space():
 
 
 # C "ohne augmentation & andere params variabel", num_classes=10, maxbudget=64, raum der anderen parameter wie gestern eingestellt AUSSER alle Basis-Modelle erlauben.
-def get_space_C()
+def get_space_C():
     hpRaw = [
         #<    name              >   <  Range       >      <Default>     <Log>   <Type>
         ["base_model",              ["InceptionV3",
