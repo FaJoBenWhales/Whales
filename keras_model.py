@@ -317,12 +317,11 @@ def eval_base_models(num_classes = 10):
     # ut.save_bar_plot(results, base_models)
         
     return results
-    
-    
-def main():
-    print("****** Run short training with InceptionV3 and save results. ******")
-    num_classes = 10
-    config_dict = {'base_model': 'InceptionV3', 
+
+
+# Global variable for a good configuration that can be used in example cases.
+
+good_config =  {'base_model': 'InceptionV3', 
                    'num_dense_layers': 2,
                    'num_dense_units_0': 223,
                    'num_dense_units_1': 292,
@@ -333,7 +332,12 @@ def main():
                    'cnn_learning_rate': 0.00029,
                    'unfreeze_percentage': 0.254,
                    'batch_size': 29}
-    _, _, histories = train(config_dict, epochs=128, num_classes=num_classes)
+    
+    
+def main():
+    print("****** Run short training with InceptionV3 and save results. ******")
+    num_classes = 10
+    _, _, histories = train(good_config, epochs=128, num_classes=num_classes)
     print("HISTORIES:")
     print(histories)
     run_name = tools.get_run_name()
@@ -351,5 +355,9 @@ if __name__ == "__main__":
     if "--class-graph" in sys.argv:
         tools.draw_num_classes_graphs()
         exit()
-    print("given command line options unknown.")
+    if "--repeated" in sys.argv:
+        tools.draw_repeated_config_graph(good_config, runs=10, epochs=40)
+        exit()
+        
+    print("Usage: python3 keras_model.py [--class-graph | --repeated].")
     

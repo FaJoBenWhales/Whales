@@ -8,6 +8,9 @@ import os
 from keras.applications.inception_v3 import InceptionV3
 import keras.utils
 import utilities as ut
+import keras_model
+import hyperband_plotting
+from pprint import pprint
 
 
 def get_run_name(prefix="run", additional=""):
@@ -33,6 +36,36 @@ def save_learning_curves(history, run_name, base_path="plots/"):
                  title=run_name, path=fn_accuracies)
 
 
+def vis_print(string):
+    print("\n" + 75 * "=" + "\n" + string + "\n")
+
+
+def draw_repeated_config_graph(config, runs=10, epochs=40, num_classes=10, run_name="", base_path="plots"):
+    """Run a configuration several times and draw all learning curves in one plot."""
+
+    run_name = get_run_name(prefix="repeated", additional=run_name)
+    path = os.path.join(base_path, run_name)
+    if not os.path.isdir(path):
+        os.makedirs(path)
+
+    vis_print("Running the following configuration for {} times, {} epochs each.".
+              format(runs, epochs))
+    pprint(config)
+    for i in range(runs):
+        vis_print("Starting run {} / {}".format(i + 1, runs))
+        loss, runtime, _ = keras_model.train(config,
+                                             epochs=epochs,
+                                             num_classes=num_classes,
+                                             save_data_path=path)
+        vis_print("Finished run {} / {}. validation error = {}, runtime = {}"
+                  .format(i + 1, runs, loss, runtime))
+
+    print("Creating graph.")
+    hyperband_plotting.plot_learning_curves(
+        path,
+        title="Repeated training of fixed configuration")
+    print("Graph created.")
+        
 def draw_num_classes_graphs():
     print("Will likely not work because")
     print("keras_tools.draw_num_classes_graphs() was not yet adapted")
@@ -42,7 +75,7 @@ def draw_num_classes_graphs():
     for num_classes in values:
         print("Training model on {} most common classes.".format(num_classes))
         model = create_pretrained_model(num_classes=num_classes)
-        histories = train(model, num_classes, epochs=50)
+        histories = keras_model.train(model, num_classes, epochs=50)
         run_name = get_run_name("{}classes".format(num_classes))
         save_learning_curves(histories, run_name)
         csv_path = os.path.join("plots/", run_name, "data.csv")
