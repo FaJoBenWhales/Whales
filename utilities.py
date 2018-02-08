@@ -5,6 +5,7 @@
 # git test
 
 import os
+import errno
 import copy
 import csv
 import numpy as np
@@ -28,6 +29,24 @@ def read_csv(file_name = "data/train.csv"):
             csv_list.append((rows[0],rows[1]))
 
     return csv_list[1:]
+
+
+def read_csv_dict(filename):
+    """Read complete csv file and return as dict."""  
+    if not os.path.isfile(filename):
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), filename)
+
+    csv_dict = dict()
+    with open(filename) as csvfile:
+        reader = csv.reader(csvfile)
+        keys = next(reader)
+        for k in keys:
+            csv_dict[k] = []
+        for row in reader:
+            for i, item in enumerate(row):
+                csv_dict[keys[i]].append(item)
+        return csv_dict
+    
 
 # write list of tuples (filename,whale_name) to csv file
 def write_csv(csv_list, file_name = "data/small_train.csv"):
@@ -361,15 +380,19 @@ def Dummy_MAP(probs = 'uniform',
 
 # Plotting utilities
 
-def save_plot(x, ys, xlabel, ylabel, path, title=""):
+def save_plot(x, ys, xlabel, ylabel, path, title="", legend=True, figsize=None, style=None):
     """Create and save matplotlib plot with the desired data.
-    ys is a dict of data lines with their labels as keys."""
-    plt.figure()
-    for (ylabel, y) in ys.items():
-        plt.plot(x, y)        
+    ys is a dict of data lines with their labels as keys.
+    x must not be shorter than any y-curve."""
+    plt.figure(figsize=figsize)
+    if style is None:
+        style = []
+    for (label, y) in ys.items():
+        plt.plot(x[:len(y)], y, label=label, *style)
     plt.title(title)
-    plt.xlabel(xlabel)    
-    plt.legend(ys.keys())
+    plt.xlabel(xlabel)
+    if legend:
+        plt.legend()
     plt.ylabel(ylabel)
     plt.savefig(path)
 
