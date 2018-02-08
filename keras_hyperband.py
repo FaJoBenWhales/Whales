@@ -155,7 +155,7 @@ def get_augmentation_config_space():
     return configuration_space_from_raw(hpRaw, hpRawConditions, resolve_multiple='AND')
 
 
-B "beste-augmentation fix & andere params variabel extended", num_classes=10, maxbudget=64, raum der anderen parameter wie gestern eingestellt AUSSER alle Basis-Modelle erlauben.
+# B "beste-augmentation fix & andere params variabel extended", num_classes=10, maxbudget=64, raum der anderen parameter wie gestern eingestellt AUSSER alle Basis-Modelle erlauben.
 def get_space_B()
     hpRaw = [
         #<    name              >   <  Range       >      <Default>     <Log>   <Type>
