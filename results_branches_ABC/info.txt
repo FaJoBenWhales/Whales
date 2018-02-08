@@ -1,0 +1,24 @@
+---------------------------------------------------------
+A 
+
+"beste-augmentation fix & andere params variabel original", num_classes=10, maxbudget=64, raum der anderen parameter wie gestern eingestellt, nur InceptionV3
+
+incumbent: 0.2752293495956911
+
+--------------------------------------------------------
+--------------------------------------------------------
+B
+
+"beste-augmentation fix & andere params variabel extended", num_classes=10, maxbudget=64, raum der anderen parameter wie gestern eingestellt AUSSER alle Basis-Modelle erlauben.
+
+incumbent: 0.1818181787218366
+
+--------------------------------------------------------
+--------------------------------------------------------
+C
+
+"ohne augmentation & andere params variabel", num_classes=10, maxbudget=64, raum der anderen parameter wie gestern eingestellt AUSSER alle Basis-Modelle erlauben.
+
+
+incumbent: 0.21875
+--------------------------------------------------------
