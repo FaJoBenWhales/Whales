@@ -356,7 +356,7 @@ if __name__ == "__main__":
         tools.draw_num_classes_graphs()
         exit()
     if "--repeated" in sys.argv:
-        tools.draw_repeated_config_graph(good_config, runs=3, epochs=100)
+        tools.draw_repeated_config_graph(good_config, runs=10, epochs=100)
         exit()
         
     print("Usage: python3 keras_model.py [--class-graph | --repeated].")
