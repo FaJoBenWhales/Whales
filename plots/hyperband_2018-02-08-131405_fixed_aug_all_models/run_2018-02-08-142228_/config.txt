@@ -1,0 +1,5 @@
+configuration of this run:
+{'activation': 'relu', 'width_shift_range': 0.013, 'zoom_range': 0.273, 'learning_rate': 0.0008383709547929253, 'height_shift_range': 0.267, 'batch_size': 35, 'num_dense_layers': 2, 'optimizer': 'SGD', 'base_model': 'MobileNet', 'rotation_range': 24, 'unfreeze_percentage': 0.16893901440112918, 'num_dense_units_0': 154, 'cnn_learning_rate': 0.00022435029177690212, 'cnn_unlock_epoch': 18, 'num_dense_units_1': 439}
+epochs=4
+num_classes=10
+train_valid_split=0.7

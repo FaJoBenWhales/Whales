@@ -1,0 +1,5 @@
+configuration of this run:
+{'activation': 'tanh', 'width_shift_range': 0.013, 'zoom_range': 0.273, 'learning_rate': 0.00034250364632725075, 'height_shift_range': 0.267, 'batch_size': 21, 'num_dense_layers': 2, 'optimizer': 'RMSProp', 'base_model': 'Xception', 'rotation_range': 24, 'unfreeze_percentage': 0.10187798747318884, 'num_dense_units_0': 102, 'cnn_learning_rate': 0.0006568568909618812, 'cnn_unlock_epoch': 26, 'num_dense_units_1': 72}
+epochs=2
+num_classes=10
+train_valid_split=0.7

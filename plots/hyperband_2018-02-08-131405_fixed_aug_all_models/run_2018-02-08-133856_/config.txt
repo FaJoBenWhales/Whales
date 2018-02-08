@@ -1,0 +1,5 @@
+configuration of this run:
+{'activation': 'relu', 'width_shift_range': 0.013, 'zoom_range': 0.273, 'learning_rate': 0.00010298931767531302, 'height_shift_range': 0.267, 'batch_size': 22, 'num_dense_units_2': 42, 'num_dense_layers': 3, 'optimizer': 'SGD', 'base_model': 'InceptionResNetV2', 'rotation_range': 24, 'unfreeze_percentage': 0.17634795343568943, 'num_dense_units_0': 185, 'cnn_learning_rate': 0.00018069154183323057, 'cnn_unlock_epoch': 17, 'num_dense_units_1': 135}
+epochs=2
+num_classes=10
+train_valid_split=0.7
