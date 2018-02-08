@@ -380,17 +380,19 @@ def Dummy_MAP(probs = 'uniform',
 
 # Plotting utilities
 
-def save_plot(x, ys, xlabel, ylabel, path, title="", legend=True):
+def save_plot(x, ys, xlabel, ylabel, path, title="", legend=True, figsize=None, style=None):
     """Create and save matplotlib plot with the desired data.
     ys is a dict of data lines with their labels as keys.
     x must not be shorter than any y-curve."""
-    plt.figure()
-    for (ylabel, y) in ys.items():
-        plt.plot(x[:len(y)], y)        
+    plt.figure(figsize=figsize)
+    if style is None:
+        style = []
+    for (label, y) in ys.items():
+        plt.plot(x[:len(y)], y, label=label, *style)
     plt.title(title)
     plt.xlabel(xlabel)
     if legend:
-        plt.legend(ys.keys())
+        plt.legend()
     plt.ylabel(ylabel)
     plt.savefig(path)
 
