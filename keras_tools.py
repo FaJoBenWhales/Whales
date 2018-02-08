@@ -35,6 +35,23 @@ def save_learning_curves(history, run_name, base_path="plots/"):
                  title=run_name, path=fn_accuracies)
 
 
+def save_learning_curves_2(history, cnn_after, run_name, base_path="plots/"):
+    """Saves the data from keras history dict in loss and accuracy graphs to folder
+    specified by base_path and run_name."""
+    path = os.path.join(base_path, run_name)
+    if not os.path.isdir(path):
+        os.makedirs(path)
+    # losses = {k: history[k] for k in ['loss', 'val_loss']}
+    accuracies = {k: history[k] for k in ['val_acc','acc']}
+    accuracies = {k: history[k] for k in ['val_acc']}
+    
+    x = range(len(accuracies['val_acc']))
+    # fn_losses = os.path.join(path, "loss.png")
+    fn_accuracies = os.path.join(path, "accuracy.png")
+    ut.save_plot_2(cnn_after, x, ys=accuracies, xlabel="epoch", ylabel="accuracy",
+                 title=run_name, path=fn_accuracies)    
+    
+
 def draw_num_classes_graphs():
     print("Will likely not work because")
     print("keras_tools.draw_num_classes_graphs() was not yet adapted")

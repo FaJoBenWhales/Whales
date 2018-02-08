@@ -191,7 +191,7 @@ def create_small_case(sel_whales = [1,2,3],             # whales to be considere
 
     train_list=[]
     valid_list=[]    
-    for i in sel_whales:                          
+    for i in sel_whales:
         print("copy {} images for whale # {}, called {}"
               .format(whales[i][1], i, whales[i][0]))
         
@@ -372,8 +372,33 @@ def save_plot(x, ys, xlabel, ylabel, path, title=""):
     plt.xlabel(xlabel)    
     plt.legend(ys.keys())
     plt.ylabel(ylabel)
+    # plt.yscale('log')       
     plt.savefig(path)
+    plt.show()
 
+def save_plot_2(cnn_after, x, ys, xlabel, ylabel, path, title=""):
+    """Create and save matplotlib plot with the desired data.
+    ys is a dict of data lines with their labels as keys."""
+    plt.figure()
+    for (ylabel, y) in ys.items():
+        line_1 = plt.plot(x[:cnn_after], y[:cnn_after], label = "val acc frozen cnn layers")        
+        line_2 = plt.plot(x[cnn_after:], y[cnn_after:], label = "val acc unfrozen top 2 cnn layers")
+    plt.title("effect of unfreezing top cnn layers \n after training dense layers (20 classes)")
+    plt.xlabel(xlabel)    
+    # plt.legend([line_1,line_2], ['frozen cnn layers', 'unfreezing top 2 cnn layer-blocks'])
+    plt.legend()
+    # plt.legend([line_1,line_2], ['frozen cnn layers', 'gaga'])
+    
+    plt.ylabel(ylabel)
+
+    plt.savefig(path)
+    plt.show()   
+    
+# line_up, = plt.plot([1,2,3], label='Line 2')
+# line_down, = plt.plot([3,2,1], label='Line 1')
+# plt.legend([line_up, line_down], ['Line Up', 'Line Down'])
+    
+    
 # plot twin-bars given labels for x-axis
 def save_bar_plot(results, x_axis_ticks, num_classes):
     
@@ -416,7 +441,7 @@ def save_plot_num_classes(results, x_axis_ticks):
     
     MAPs = ax.bar(ind + width, [r[1] for r in results], width, color='g', bottom=0)
 
-    ax.set_title('MAPs of model versus dummy MAPs\nfor different number of classes')
+    ax.set_title('Mean Average Precision (k=5) of model\nversus dummy MAPs for different number of classes')
     ax.set_xticks(ind + width / 2)
 
     # bring x-axis labels into printable size            
@@ -425,6 +450,7 @@ def save_plot_num_classes(results, x_axis_ticks):
 
     ax.legend((avg_accs[0], MAPs[0]), ('Model MAP', 'Dummy MAP'))
     ax.autoscale_view()
+    # plt.yscale('log')    
     if not os.path.isdir("plots/poster_plots"):
         os.makedirs("plots/poster_plots")
     plt.savefig("plots/poster_plots/num_classes.png")
