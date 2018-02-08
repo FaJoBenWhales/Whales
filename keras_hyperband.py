@@ -155,8 +155,8 @@ def get_augmentation_config_space():
     return configuration_space_from_raw(hpRaw, hpRawConditions, resolve_multiple='AND')
 
 
-B "beste-augmentation fix & andere params variabel extended", num_classes=10, maxbudget=64, raum der anderen parameter wie gestern eingestellt AUSSER alle Basis-Modelle erlauben.
-def get_space_B()
+# C "ohne augmentation & andere params variabel", num_classes=10, maxbudget=64, raum der anderen parameter wie gestern eingestellt AUSSER alle Basis-Modelle erlauben.
+def get_space_C()
     hpRaw = [
         #<    name              >   <  Range       >      <Default>     <Log>   <Type>
         ["base_model",              ["InceptionV3",
@@ -177,10 +177,10 @@ def get_space_B()
         ["cnn_unlock_epoch",        [10, 30],               20,         False,  "int"],
         ["unfreeze_percentage",     [0.0, 0.3],             0.1,        False,  "float"],
         ["batch_size",              [16, 64],               32,         True,   "int"],
-        ["zoom_range",              None,                   0.273,        False,  "float"],
-        ["width_shift_range",       None,                   0.013,        False,  "float"],
-        ["height_shift_range",      None,                   0.267,        False,  "float"],
-        ["rotation_range",          None,                   24,         False,  "int"],
+        ["zoom_range",              None,                   0.0,        False,  "float"],
+        ["width_shift_range",       None,                   0.0,        False,  "float"],
+        ["height_shift_range",      None,                   0.0,        False,  "float"],
+        ["rotation_range",          None,                   0,         False,  "int"],
     ]
     hpRawConditions = [
         #< conditional hp name      >   <cond. Type>    <cond. variable>        <cond. value>
@@ -350,7 +350,7 @@ def optimize(objective=keras_objective,
         
 
 if __name__ == "__main__":
-    print("optimizing with fixed augmentation including all models.")
-    optimize(max_budget=64, run_name="fixed_aug_all_models", config_space_getter=get_space_B)
+    print("optimizing without augmentation, but including all models.")
+    optimize(max_budget=64, run_name="no_aug_all_models", config_space_getter=get_space_C)
     exit()
         
