@@ -33,8 +33,10 @@ def plot_learning_curves(path, title="Hyperband: evaluated learning curves"):
         val_error = [1.0 - float(acc) for acc in csv['val_acc']]
         ys[run_name] = val_error
 
-    max_length = max(len(lc) for lc in ys)
-    ut.save_plot(x=list(range(max_length)),
+    max_select = [len(ys[key]) for key in ys]
+    max_length = max(max_select)
+    x = list(range(max_length))
+    ut.save_plot(x=x,
                  ys=ys,
                  xlabel="epoch",
                  ylabel="vaidation error",

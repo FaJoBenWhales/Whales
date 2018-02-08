@@ -385,7 +385,7 @@ def save_plot(x, ys, xlabel, ylabel, path, title="", legend=True):
     ys is a dict of data lines with their labels as keys.
     x must not be shorter than any y-curve."""
     plt.figure()
-    for (ylabel, y) in ys.items():
+    for (_, y) in ys.items():
         plt.plot(x[:len(y)], y)        
     plt.title(title)
     plt.xlabel(xlabel)
