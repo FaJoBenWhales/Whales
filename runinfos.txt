@@ -1,0 +1,67 @@
+
+A "beste-augmentation fix & andere params variabel original", num_classes=10, maxbudget=64, raum der anderen parameter wie gestern eingestellt, nur InceptionV3
+B "beste-augmentation fix & andere params variabel extended", num_classes=10, maxbudget=64, raum der anderen parameter wie gestern eingestellt AUSSER alle Basis-Modelle erlauben.
+C "ohne augmentation & andere params variabel", num_classes=10, maxbudget=64, raum der anderen parameter wie gestern eingestellt AUSSER alle Basis-Modelle erlauben.
+
+
+
+
+
+
+
+
+KANDIDATEN BESTE AUGMENTATION:     
+----------------------------------
+{'num_dense_units_0': 1024, 
+'unfreeze_percentage': 0.1, 
+'base_model': 'MobileNet', 
+'optimizer': 'RMSProp', 
+'cnn_learning_rate': 0.0001, 
+'num_dense_layers': 3, 
+'num_dense_units_2': 1024, 
+'rotation_range': 24, 
+'num_dense_units_1': 1024, 
+'height_shift_range': 0.2670700417347278, 
+'batch_size': 16, 
+'width_shift_range': 0.013291399844807938, 
+'zoom_range': 0.2731176562700109, 
+'learning_rate': 0.001, 
+'activation': 'relu', 
+'cnn_unlock_epoch': 20}
+
+'budget': 32.0
+
+
+         <<------ diese Konfig benutzen
+'zoom_range': 0.273
+'width_shift_range': 0.013
+'height_shift_range': 0.267
+'rotation_range': 24, 
+
+
+
+
+
+----------------------------------
+
+{'num_dense_units_0': 1024, 
+'unfreeze_percentage': 0.1, 
+'base_model': 'MobileNet', 
+'optimizer': 'RMSProp', 
+'cnn_learning_rate': 0.0001, 
+'num_dense_layers': 3, 
+'num_dense_units_2': 1024, 
+'rotation_range': 18, 
+'num_dense_units_1': 1024, 
+'height_shift_range': 0.04757545668121786, 
+'batch_size': 16, 
+'width_shift_range': 0.18125668392970537, 
+'zoom_range': 0.2896801640408217, 
+'learning_rate': 0.001, 
+'activation': 'relu', 
+'cnn_unlock_epoch': 20}
+
+'budget': 32.0
+
+
+------------------------------------

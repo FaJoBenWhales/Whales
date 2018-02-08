@@ -154,6 +154,39 @@ def get_augmentation_config_space():
     ]
     return configuration_space_from_raw(hpRaw, hpRawConditions, resolve_multiple='AND')
 
+
+#A "beste-augmentation fix & andere params variabel original", num_classes=10, maxbudget=64, raum der anderen parameter wie gestern eingestellt, nur InceptionV3
+def get_space_A()
+    hpRaw = [
+        #<    name              >   <  Range       >      <Default>     <Log>   <Type>
+        ["base_model",              ["InceptionV3"],    "InceptionV3",  None,   "cat"],
+        ["num_dense_layers",        [2, 3],                 2,          False,  "int"],
+        ["num_dense_units_0",       [100, 1000],             300,       True,   "int"],
+        ["num_dense_units_1",       [50, 500],              200,        True,   "int"],
+        ["num_dense_units_2",       [10, 300],              100,        True,   "int"],
+        # ["num_dense_units_3",       [50, 500],              50,         True,   "int"],
+        ["activation",              ["relu", "tanh"],       "relu",     None,   "cat"],
+        ["optimizer",               ["Adam", "SGD", 
+                                     "RMSProp"],            "SGD",      None,   "cat"],
+        ["learning_rate",           [0.0001, 0.01],         0.001,      True,   "float"],
+        ["cnn_learning_rate",       [0.00001, 0.001],       0.0001,     True,   "float"],
+        ["cnn_unlock_epoch",        [10, 30],               20,         False,  "int"],
+        ["unfreeze_percentage",     [0.0, 0.3],             0.1,        False,  "float"],
+        ["batch_size",              [16, 64],               32,         True,   "int"],
+        ["zoom_range",              None,                   0.273,        False,  "float"],
+        ["width_shift_range",       None,                   0.013,        False,  "float"],
+        ["height_shift_range",      None,                   0.267,        False,  "float"],
+        ["rotation_range",          None,                   24,         False,  "int"],
+    ]
+    hpRawConditions = [
+        #< conditional hp name      >   <cond. Type>    <cond. variable>        <cond. value>
+        # ["num_dense_units_1",           "gtr",          "num_dense_layers",     1],
+        ["num_dense_units_2",           "gtr",          "num_dense_layers",     2],
+        # ["num_dense_units_3",           "eq",           "num_dense_layers",     4],
+    ]
+    return configuration_space_from_raw(hpRaw, hpRawConditions, resolve_multiple='AND')
+
+
 def get_keras_config_space():
     hpRaw = [
         #<    name              >   <  Range       >      <Default>     <Log>   <Type>
@@ -313,14 +346,7 @@ def optimize(objective=keras_objective,
         
 
 if __name__ == "__main__":
-
-    if "--augmentation" in sys.argv:
-        print("oprimizing data augmentation.")
-        optimize(max_budget=64, run_name="augmentation", config_space_getter=get_augmentation_config_space)
-        exit()
-    else:
-        print("optimizing keras_model.")
-        optimize(max_budget=128, run_name="testrun")
-        exit()
+    print("optimizing with fixed augmentation.")
+    optimize(max_budget=64, run_name="fixed_aug", config_space_getter=get_space_A)
+    exit()
         
-    print("given command line options unknown.")
