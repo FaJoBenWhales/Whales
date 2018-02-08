@@ -276,7 +276,6 @@ def train(config_dict,
         ut.append_to_file("epochs=" + str(epochs), config_file_path)
         ut.append_to_file("num_classes=" + str(num_classes), config_file_path)
         ut.append_to_file("train_valid_split=" + str(train_valid_split), config_file_path)
-
     hpbandster_loss = 1.0 - histories['val_acc'][-1]
     runtime = time.time() - start_time
     return (hpbandster_loss, runtime, histories)
@@ -324,17 +323,17 @@ def main():
     print("****** Run short training with InceptionV3 and save results. ******")
     num_classes = 10
     config_dict = {'base_model': 'InceptionV3', 
-                   'num_dense_layers': 3,
-                   'num_dense_units_0': 500,
-                   'num_dense_units_1': 250,
-                   'num_dense_units_2': 50,
+                   'num_dense_layers': 2,
+                   'num_dense_units_0': 223,
+                   'num_dense_units_1': 292,
                    'activation': 'relu',
-                   'optimizer': "SGD",
-                   'learning_rate': 0.001,
-                   'cnn_unlock_epoch': 8,
-                   'unfreeze_percentage': 0.1,
-                   'batch_size': 16}
-    _, _, histories = train(config_dict, epochs=16, num_classes=num_classes)
+                   'optimizer': "RMSProp",
+                   'learning_rate': 0.00023,
+                   'cnn_unlock_epoch': 27,
+                   'cnn_learning_rate': 0.00029,
+                   'unfreeze_percentage': 0.254,
+                   'batch_size': 29}
+    _, _, histories = train(config_dict, epochs=128, num_classes=num_classes)
     print("HISTORIES:")
     print(histories)
     run_name = tools.get_run_name()
