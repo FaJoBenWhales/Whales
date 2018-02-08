@@ -156,7 +156,7 @@ def get_augmentation_config_space():
 
 
 # B "beste-augmentation fix & andere params variabel extended", num_classes=10, maxbudget=64, raum der anderen parameter wie gestern eingestellt AUSSER alle Basis-Modelle erlauben.
-def get_space_B()
+def get_space_B():
     hpRaw = [
         #<    name              >   <  Range       >      <Default>     <Log>   <Type>
         ["base_model",              ["InceptionV3",
