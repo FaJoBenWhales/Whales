@@ -109,7 +109,7 @@ def _unfreeze_cnn_layers(model, config_dict):
     # the first 2 layer blocks and unfreeze the rest:
     
     unfreeze_percentage = config_dict["unfreeze_percentage"]
-    unfreeze_percentage = min(unfreeze_percentage, 0.3)  
+    unfreeze_percentage = min(unfreeze_percentage, 0.4)  
     unfreeze_percentage = max(unfreeze_percentage, 0.0)  
     unfreeze_blocks = 0
     if model.name == 'InceptionV3':
@@ -129,7 +129,7 @@ def _unfreeze_cnn_layers(model, config_dict):
         top_nodes = [79, 76, 73, 70, 67, 64, 61, 58, 55, 52]          
         unfreeze_blocks = int(27 * unfreeze_percentage)  # 
         if unfreeze_blocks > 0:
-            cut_off = top_nodes[unfreeze_blocks-1]
+            cut_off = top_nodes[min(unfreeze_blocks-1,len(top_nodes)-1)]
     elif model.name == 'InceptionResNetV2':    # no nodes, cut_off after activations
         top_nodes = [761, 745, 729, 713, 697, 681, 665, 649, 633, 618, 594, 578, 562, 546]
         unfreeze_blocks = int(43 * unfreeze_percentage)  # 
@@ -164,8 +164,11 @@ def train(config_dict,
           save_data_path="plots",
           train_dir="data/model_train",
           valid_dir="data/model_valid",
-          train_valid_split=0.9):   # gaga
+          train_valid_split=0.9
+          create_case = True):   # gaga
 
+    global num_train_imgs, num_valid_imgs
+    
     start_time = time.time()
     #
     # extract relevant parts of configuration
@@ -200,14 +203,15 @@ def train(config_dict,
     #
     
     # create environment on filesystem with new random train/valid split
-    num_train_imgs, num_valid_imgs = ut.create_small_case(
-        sel_whales=np.arange(1, num_classes+1),
-        train_dir=train_dir,
-        train_csv = "data/model_train.csv",
-        valid_dir=valid_dir,
-        valid_csv = None,
-        train_valid=train_valid_split,
-        sub_dirs=True)    # gaga
+    if create_case:
+        num_train_imgs, num_valid_imgs = ut.create_small_case(
+            sel_whales=np.arange(1, num_classes+1),
+            train_dir=train_dir,
+            train_csv = train_csv,
+            valid_dir=valid_dir,
+            valid_csv = valid_csv,
+            train_valid=train_valid_split,
+            sub_dirs=True)
 
     # if not os.path.isdir("data/model_train/augmented"):
     #     os.makedirs("data/model_train/augmented")
@@ -232,39 +236,53 @@ def train(config_dict,
         batch_size=batch_size, 
         class_mode="categorical")
     
-    ''' gaga
-    valid_gen = image.ImageDataGenerator(
-        rescale=1./255,
-        fill_mode="nearest")
-    
-    valid_flow = valid_gen.flow_from_directory(
-        valid_dir,
-        target_size=target_size,
-        class_mode="categorical") 
-    '''
+    if valid_dir != None:
+        valid_gen = image.ImageDataGenerator(
+            rescale=1./255,
+            fill_mode="nearest")
+
+        valid_flow = valid_gen.flow_from_directory(
+            valid_dir,
+            target_size=target_size,
+            class_mode="categorical") 
+        
     #
     # train fully connected part
     #
-    hist_dense = model.fit_generator(
-        train_flow, 
-        steps_per_epoch=num_train_imgs//batch_size,
-        verbose=2, 
-        # validation_data=valid_flow,   gaga
-        # validation_steps=num_valid_imgs//batch_size,
-        epochs=training_epochs_dense)
+    if valid_dir != None:
+        hist_dense = model.fit_generator(
+            train_flow, 
+            steps_per_epoch=num_train_imgs//batch_size,
+            verbose=2, 
+            validation_data=valid_flow,
+            validation_steps=num_valid_imgs//batch_size,
+            epochs=training_epochs_dense)
+    else:
+        hist_dense = model.fit_generator(
+            train_flow, 
+            steps_per_epoch=num_train_imgs//batch_size,
+            verbose=2, 
+            epochs=training_epochs_dense)
     histories = hist_dense.history
     #
     # train the whole model with parts of the cnn unlocked (fixed optimizer!)
     #
     if training_epochs_wholemodel > 0:
         model = _unfreeze_cnn_layers(model, config_dict)
-        hist_wholemodel = model.fit_generator(
-            train_flow, 
-            steps_per_epoch = num_train_imgs//batch_size,
-            verbose = 2, 
-            # validation_data = valid_flow,    gaga
-            # validation_steps = num_valid_imgs//batch_size,
-            epochs=training_epochs_wholemodel)
+        if valid_dir != None:       
+            hist_wholemodel = model.fit_generator(
+                train_flow, 
+                steps_per_epoch = num_train_imgs//batch_size,
+                verbose = 2, 
+                validation_data = valid_flow,
+                validation_steps = num_valid_imgs//batch_size,
+                epochs=training_epochs_wholemodel)
+        else:
+            hist_wholemodel = model.fit_generator(
+                train_flow, 
+                steps_per_epoch = num_train_imgs//batch_size,
+                verbose = 2, 
+                epochs=training_epochs_wholemodel)            
         # concatenate training history
         for key in histories.keys():
             if type(histories[key]) == list:
@@ -289,7 +307,7 @@ def train(config_dict,
     # hpbandster_loss = 1.0 - histories['val_acc'][-1]   gaga
     runtime = time.time() - start_time
     # return (hpbandster_loss, runtime, histories)
-    return (0, runtime, histories)
+    return 0, runtime, histories, model
 
 # evaluate models based on different pretrained models and compare results:
 # perform prediction on validation data, compare with true labels and compute acc and MAP
