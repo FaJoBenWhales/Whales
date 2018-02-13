@@ -160,11 +160,11 @@ def train(config_dict,
           epochs,
           model=None,
           num_classes=10,
-          save_model_path=None,
+          save_model_path="model/kaggle_model",  
           save_data_path="plots",
           train_dir="data/model_train",
           valid_dir="data/model_valid",
-          train_valid_split=0.7):
+          train_valid_split=0.9):   # gaga
 
     start_time = time.time()
     #
@@ -203,10 +203,12 @@ def train(config_dict,
     num_train_imgs, num_valid_imgs = ut.create_small_case(
         sel_whales=np.arange(1, num_classes+1),
         train_dir=train_dir,
+        train_csv = "data/model_train.csv",
         valid_dir=valid_dir,
+        valid_csv = None,
         train_valid=train_valid_split,
-        sub_dirs=True)
- 
+        sub_dirs=True)    # gaga
+
     # if not os.path.isdir("data/model_train/augmented"):
     #     os.makedirs("data/model_train/augmented")
 
@@ -230,6 +232,7 @@ def train(config_dict,
         batch_size=batch_size, 
         class_mode="categorical")
     
+    ''' gaga
     valid_gen = image.ImageDataGenerator(
         rescale=1./255,
         fill_mode="nearest")
@@ -238,7 +241,7 @@ def train(config_dict,
         valid_dir,
         target_size=target_size,
         class_mode="categorical") 
-
+    '''
     #
     # train fully connected part
     #
@@ -246,8 +249,8 @@ def train(config_dict,
         train_flow, 
         steps_per_epoch=num_train_imgs//batch_size,
         verbose=2, 
-        validation_data=valid_flow,
-        validation_steps=num_valid_imgs//batch_size,
+        # validation_data=valid_flow,   gaga
+        # validation_steps=num_valid_imgs//batch_size,
         epochs=training_epochs_dense)
     histories = hist_dense.history
     #
@@ -259,8 +262,8 @@ def train(config_dict,
             train_flow, 
             steps_per_epoch = num_train_imgs//batch_size,
             verbose = 2, 
-            validation_data = valid_flow,
-            validation_steps = num_valid_imgs//batch_size,
+            # validation_data = valid_flow,    gaga
+            # validation_steps = num_valid_imgs//batch_size,
             epochs=training_epochs_wholemodel)
         # concatenate training history
         for key in histories.keys():
@@ -283,9 +286,10 @@ def train(config_dict,
         #                  filename=csv_path)
 
     
-    hpbandster_loss = 1.0 - histories['val_acc'][-1]
+    # hpbandster_loss = 1.0 - histories['val_acc'][-1]   gaga
     runtime = time.time() - start_time
-    return (hpbandster_loss, runtime, histories)
+    # return (hpbandster_loss, runtime, histories)
+    return (0, runtime, histories)
 
 # evaluate models based on different pretrained models and compare results:
 # perform prediction on validation data, compare with true labels and compute acc and MAP
